@@ -1,6 +1,17 @@
 const cron = require('node-cron');
+
+/**
+ * A list of all scheduled jobs.
+ * @type {Array<object>}
+ */
 const jobs = [];
 
+/**
+ * Schedules a function to run at a specified interval.
+ * @param {string|number} interval - The interval at which to run the function.
+ * @param {Function} fn - The function to run.
+ * @returns {object} The scheduled job.
+ */
 function every(interval, fn) {
   const ms = typeof interval === 'string' ? parseMs(interval) : interval;
   const id = setInterval(fn, ms);
@@ -8,12 +19,21 @@ function every(interval, fn) {
   return id;
 }
 
+/**
+ * Schedules a function to run based on a cron expression.
+ * @param {string} expr - The cron expression.
+ * @param {Function} fn - The function to run.
+ * @returns {object} The scheduled job.
+ */
 function cronJob(expr, fn) {
   const job = cron.schedule(expr, fn);
   jobs.push({ type: 'cron', job });
   return job;
 }
 
+/**
+ * Stops all scheduled jobs.
+ */
 function stopAll() {
   jobs.forEach(j => {
     if (j.type === 'interval') clearInterval(j.id);
@@ -21,8 +41,12 @@ function stopAll() {
   });
 }
 
+/**
+ * Parses a string into milliseconds.
+ * @param {string} str - The string to parse.
+ * @returns {number} The parsed milliseconds.
+ */
 function parseMs(str) {
-  // Simple ms parser: "5m" => 300000
   const match = str.match(/^(\d+)(s|m|h|d)$/);
   if (!match) return 0;
   const n = parseInt(match[1]);

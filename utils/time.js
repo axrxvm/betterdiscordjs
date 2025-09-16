@@ -1,3 +1,8 @@
+/**
+ * Parses a time string into milliseconds.
+ * @param {string|number} str - The time string to parse.
+ * @returns {number} The parsed time in milliseconds.
+ */
 function parse(str) {
   if (typeof str === "number") return str;
   const match = /^(\d+)(s|m|h|d)?$/.exec(str);

@@ -3,10 +3,20 @@ const path = require("path");
 const { REST, Routes, SlashCommandBuilder } = require("discord.js");
 const logger = require("../utils/logger");
 
+/**
+ * Loads all command files from the specified directory, registers them with the bot,
+ * and syncs slash commands with Discord.
+ * @param {Bot} bot - The bot instance.
+ * @returns {Promise<void>}
+ */
 async function loadCommands(bot) {
   const commands = [];
   const commandsPath = path.resolve(process.cwd(), bot.commandsDir);
 
+  /**
+   * Recursively walks through a directory and loads all command files.
+   * @param {string} dir - The directory to walk through.
+   */
   function walk(dir) {
     fs.readdirSync(dir, { withFileTypes: true }).forEach(file => {
       const filePath = path.join(dir, file.name);
