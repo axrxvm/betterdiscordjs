@@ -9,6 +9,15 @@ const time = require("./utils/time");
 const colors =require("./utils/colors");
 const logger = require("./utils/logger");
 
+// Plugin exports
+const BasePlugin = require("./plugins/BasePlugin");
+const PluginManager = require("./plugins/PluginManager");
+
+// Built-in plugins
+const WelcomePlugin = require("./plugins/welcome");
+const ModerationPlugin = require("./plugins/moderation");
+const AutoModPlugin = require("./plugins/automod");
+
 /**
  * The main export of the better-djs framework.
  * @module better-djs
@@ -16,5 +25,20 @@ const logger = require("./utils/logger");
  * @property {object} time - Time and duration utilities.
  * @property {object} colors - Color definitions for logging.
  * @property {object} logger - The logging utility.
+ * @property {BasePlugin} BasePlugin - Base class for creating plugins.
+ * @property {PluginManager} PluginManager - Plugin management system.
+ * @property {object} plugins - Built-in plugins.
  */
-module.exports = { Bot, time, colors, logger };
+module.exports = { 
+  Bot, 
+  time, 
+  colors, 
+  logger,
+  BasePlugin,
+  PluginManager,
+  plugins: {
+    WelcomePlugin,
+    ModerationPlugin,
+    AutoModPlugin
+  }
+};

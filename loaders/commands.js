@@ -13,6 +13,12 @@ async function loadCommands(bot) {
   const commands = [];
   const commandsPath = path.resolve(process.cwd(), bot.commandsDir);
 
+  // Check if commands directory exists
+  if (!fs.existsSync(commandsPath)) {
+    logger.warn(`Commands directory '${commandsPath}' does not exist. No commands loaded.`);
+    return;
+  }
+
   /**
    * Recursively walks through a directory and loads all command files.
    * @param {string} dir - The directory to walk through.

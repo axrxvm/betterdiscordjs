@@ -4,24 +4,198 @@ const loadEvents = require("./loaders/events");
 const Ctx = require("./utils/ctx");
 const logger = require("./utils/logger");
 const db = require("./utils/db");
+const PluginManager = require("./plugins/PluginManager");
 
-/**
- * The main bot class, handles client initialization, command and event loading,
- * and other core functionalities.
- * @class
- */
 class Bot {
   /**
-   * Creates an instance of the Bot.
-   * @param {string} token - The Discord bot token.
-   * @param {object} [options={}] - The bot options.
-   * @param {string} [options.commandsDir=null] - The directory for command files.
-   * @param {string} [options.eventsDir=null] - The directory for event files.
-   * @param {string} [options.devGuild=null] - The developer guild ID for testing.
-   * @param {string} [options.clientId=null] - The bot's client ID.
-   * @param {string} [options.prefix='!'] - The default command prefix.
+   * Sets the bot's presence (status/activity).
+   * @param {object} presenceObj - Discord.js presence object.
    */
+  setPresence(presenceObj) {
+    if (this.client && this.client.user) {
+      this.client.user.setPresence(presenceObj);
+    } else {
+      this._pendingPresence = presenceObj;
+    }
+  }
+  /** Global hooks for command run/error */
+  onCommandRun(fn) { this._onCommandRun = fn; }
+  onCommandError(fn) { this._onCommandError = fn; }
+
+  /** Event middleware */
+  beforeEvent(fn) { this._beforeEvent = fn; }
+
+  /** Hot reload for commands/events */
+  async reloadCommands() {
+    this.commands.clear();
+    await loadCommands(this);
+    logger.info('Commands hot-reloaded.');
+  }
+  async reloadEvents() {
+    // Remove all listeners except internal
+    this.client.removeAllListeners();
+    await loadEvents(this);
+    logger.info('Events hot-reloaded.');
+  }
+
+  /** Wildcard event listeners */
+  onAny(fn) {
+    this._wildcardListeners = this._wildcardListeners || [];
+    this._wildcardListeners.push(fn);
+  }
+  /** Integrate scheduler and queue */
+  every(interval, fn) {
+    return require('./utils/scheduler').every(interval, fn);
+  }
+  cron(expr, fn) {
+    return require('./utils/scheduler').cron(expr, fn);
+  }
+  getQueue(name = 'default') {
+    this._queues = this._queues || {};
+    if (!this._queues[name]) this._queues[name] = new (require('./utils/queue'))();
+    return this._queues[name];
+  }
+  /** Command inhibitors: pluggable conditions */
+  addInhibitor(fn) {
+    this._inhibitors = this._inhibitors || [];
+    this._inhibitors.push(fn);
+  }
+
+  /** Enable/disable commands per guild */
+  setCommandEnabled(guildId, cmdName, enabled) {
+    this._cmdConfig = this._cmdConfig || {};
+    this._cmdConfig[guildId] = this._cmdConfig[guildId] || {};
+    this._cmdConfig[guildId][cmdName] = enabled;
+  }
+  isCommandEnabled(guildId, cmdName) {
+    return this._cmdConfig?.[guildId]?.[cmdName] !== false;
+  }
+
+  /** Register context menu command */
+  contextMenu(name, type, handler, description = "No description") {
+    this.commands.set(name, { name, type, run: handler, description, contextMenu: true });
+  }
+
+  /** Register command overloads */
+  overload(name, patterns, handler, description = "No description") {
+    this.commands.set(name, { name, patterns, run: handler, description, overload: true });
+  }
+  /** Register global event hook */
+  onAllEvents(handler) {
+    this._allEventHandler = handler;
+  }
+
+  /** Register error hook */
+  onError(handler) {
+    this._errorHandler = handler;
+  }
+
+  /** Register pre/post command hooks */
+  beforeCommand(handler) {
+    this._beforeCommand = handler;
+  }
+  afterCommand(handler) {
+    this._afterCommand = handler;
+  }
+
+  /** Plugin management methods */
+  async loadPlugin(pluginName) {
+    return await this.pluginManager.load(pluginName);
+  }
+
+  async unloadPlugin(pluginName) {
+    return await this.pluginManager.unload(pluginName);
+  }
+
+  async reloadPlugin(pluginName) {
+    return await this.pluginManager.reload(pluginName);
+  }
+
+  async enablePlugin(pluginName) {
+    return await this.pluginManager.enable(pluginName);
+  }
+
+  async disablePlugin(pluginName) {
+    return await this.pluginManager.disable(pluginName);
+  }
+
+  getPlugin(pluginName) {
+    return this.pluginManager.getPlugin(pluginName);
+  }
+
+  listPlugins() {
+    return this.pluginManager.list();
+  }
+
+  /** Load plugin from class directly */
+  async loadPluginFromClass(PluginClass, pluginName = null) {
+    try {
+      const name = pluginName || PluginClass.name.toLowerCase().replace('plugin', '');
+      
+      // Create plugin instance
+      const plugin = new PluginClass(this, this.pluginManager);
+      
+      // Validate plugin
+      if (!plugin.name || !plugin.version) {
+        throw new Error(`Plugin ${name} is missing required properties (name, version)`);
+      }
+
+      // Check dependencies
+      if (plugin.dependencies) {
+        for (const dep of plugin.dependencies) {
+          if (!this.pluginManager.plugins.has(dep)) {
+            throw new Error(`Plugin ${plugin.name} requires ${dep} which is not loaded`);
+          }
+        }
+      }
+
+      // Initialize plugin
+      await plugin.onLoad();
+      
+      this.pluginManager.plugins.set(plugin.name, plugin);
+      
+      // Update config
+      const config = this.pluginManager.pluginConfigs.get(plugin.name) || {};
+      config.enabled = true;
+      config.loadedAt = new Date().toISOString();
+      config.loadedFromCode = true;
+      this.pluginManager.pluginConfigs.set(plugin.name, config);
+      this.pluginManager.saveConfig();
+      
+      logger.info(`✅ Loaded plugin from code: ${plugin.name} v${plugin.version}`);
+      
+      return plugin;
+    } catch (error) {
+      logger.error(`❌ Failed to load plugin from class: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /** Use plugin - chainable method for fluent API */
+  use(PluginClass, pluginName = null) {
+    // Store plugin to load after start()
+    this._pendingPlugins = this._pendingPlugins || [];
+    this._pendingPlugins.push({ PluginClass, pluginName });
+    return this;
+  }
   constructor(token, options = {}) {
+  /**
+   * @param {string} [options.slashMode] - 'dev' for dev guild only, 'global' for global registration.
+   * @param {boolean} [options.autoRegisterSlash] - Enable/disable automatic slash registration (default: true).
+   */
+  this.slashMode = options.slashMode || (options.devGuild ? 'dev' : 'global');
+  this.autoRegisterSlash = options.autoRegisterSlash !== false;
+  this.presence = options.presence || null;
+    /**
+     * Creates an instance of the Bot.
+     * @param {string} token - The Discord bot token.
+     * @param {object} [options={}] - The bot options.
+     * @param {string} [options.commandsDir] - The directory for command files.
+     * @param {string} [options.eventsDir] - The directory for event files.
+     * @param {string} [options.devGuild] - The developer guild ID for testing.
+     * @param {string} [options.clientId] - The bot's client ID.
+     * @param {string} [options.prefix] - The default command prefix (default: "!").
+     */
     this.token = token || process.env.DISCORD_TOKEN;
     if (!this.token) throw new Error("[better-djs] No token provided!");
 
@@ -38,198 +212,29 @@ class Bot {
     this.commands = new Collection();
     this.aliases = new Collection();
     this.cooldowns = new Collection();
+    
+    // Initialize plugin system
+    this.pluginManager = new PluginManager(this);
 
     this.commandsDir = options.commandsDir || null;
     this.eventsDir = options.eventsDir || null;
     this.devGuild = options.devGuild || null;
     this.clientId = options.clientId || process.env.CLIENT_ID || null;
 
-    this.prefix = options.prefix || "!";
+    this.prefix = typeof options.prefix === "string" ? options.prefix : "!";
 
-    /**
-     * Sets the prefix for a specific guild.
-     * @param {string} guildId - The ID of the guild.
-     * @param {string} newPrefix - The new prefix to set.
-     * @returns {Promise<void>}
-     */
+    /** Change the bot's prefix at runtime and persist it for a guild */
     this.setPrefix = async (guildId, newPrefix) => {
-      await db.setGuildConfig(guildId, 'prefix', newPrefix);
+      await db.setPrefix(guildId, newPrefix);
       logger.info(`Prefix for guild ${guildId} changed to: ${newPrefix}`);
     };
   }
 
-  /**
-   * Sets a global hook for command execution.
-   * @param {Function} fn - The function to run when a command is executed.
-   */
-  onCommandRun(fn) { this._onCommandRun = fn; }
-
-  /**
-   * Sets a global hook for command errors.
-   * @param {Function} fn - The function to run when a command encounters an error.
-   */
-  onCommandError(fn) { this._onCommandError = fn; }
-
-  /**
-   * Sets a middleware function to run before any event.
-   * @param {Function} fn - The middleware function.
-   */
-  beforeEvent(fn) { this._beforeEvent = fn; }
-
-  /**
-   * Hot reloads all commands.
-   * @returns {Promise<void>}
-   */
-  async reloadCommands() {
-    this.commands.clear();
-    await loadCommands(this);
-    logger.info('Commands hot-reloaded.');
-  }
-
-  /**
-   * Hot reloads all events.
-   * @returns {Promise<void>}
-   */
-  async reloadEvents() {
-    this.client.removeAllListeners();
-    await loadEvents(this);
-    logger.info('Events hot-reloaded.');
-  }
-
-  /**
-   * Adds a wildcard listener for all events.
-   * @param {Function} fn - The listener function.
-   */
-  onAny(fn) {
-    this._wildcardListeners = this._wildcardListeners || [];
-    this._wildcardListeners.push(fn);
-  }
-
-  /**
-   * Schedules a function to run at a specified interval.
-   * @param {string} interval - The interval at which to run the function.
-   * @param {Function} fn - The function to run.
-   * @returns {object} The scheduled job.
-   */
-  every(interval, fn) {
-    return require('./utils/scheduler').every(interval, fn);
-  }
-
-  /**
-   * Schedules a function to run based on a cron expression.
-   * @param {string} expr - The cron expression.
-   * @param {Function} fn - The function to run.
-   * @returns {object} The scheduled job.
-   */
-  cron(expr, fn) {
-    return require('./utils/scheduler').cron(expr, fn);
-  }
-
-  /**
-   * Gets a queue by name, creating it if it doesn't exist.
-   * @param {string} [name='default'] - The name of the queue.
-   * @returns {object} The queue instance.
-   */
-  getQueue(name = 'default') {
-    this._queues = this._queues || {};
-    if (!this._queues[name]) this._queues[name] = new (require('./utils/queue'))();
-    return this._queues[name];
-  }
-
-  /**
-   * Adds a command inhibitor.
-   * @param {Function} fn - The inhibitor function.
-   */
-  addInhibitor(fn) {
-    this._inhibitors = this._inhibitors || [];
-    this._inhibitors.push(fn);
-  }
-
-  /**
-   * Enables or disables a command for a specific guild.
-   * @param {string} guildId - The ID of the guild.
-   * @param {string} cmdName - The name of the command.
-   * @param {boolean} enabled - Whether the command should be enabled.
-   */
-  setCommandEnabled(guildId, cmdName, enabled) {
-    this._cmdConfig = this._cmdConfig || {};
-    this._cmdConfig[guildId] = this._cmdConfig[guildId] || {};
-    this._cmdConfig[guildId][cmdName] = enabled;
-  }
-
-  /**
-   * Checks if a command is enabled for a specific guild.
-   * @param {string} guildId - The ID of the guild.
-   * @param {string} cmdName - The name of the command.
-   * @returns {boolean} Whether the command is enabled.
-   */
-  isCommandEnabled(guildId, cmdName) {
-    return this._cmdConfig?.[guildId]?.[cmdName] !== false;
-  }
-
-  /**
-   * Registers a context menu command.
-   * @param {string} name - The name of the command.
-   * @param {number} type - The type of the context menu command.
-   * @param {Function} handler - The command handler.
-   * @param {string} [description='No description'] - The command description.
-   */
-  contextMenu(name, type, handler, description = "No description") {
-    this.commands.set(name, { name, type, run: handler, description, contextMenu: true });
-  }
-
-  /**
-   * Registers a command with overloads.
-   * @param {string} name - The name of the command.
-   * @param {Array<object>} patterns - The command overloads.
-   * @param {Function} handler - The command handler.
-   * @param {string} [description='No description'] - The command description.
-   */
-  overload(name, patterns, handler, description = "No description") {
-    this.commands.set(name, { name, patterns, run: handler, description, overload: true });
-  }
-
-  /**
-   * Registers a global event hook.
-   * @param {Function} handler - The event handler.
-   */
-  onAllEvents(handler) {
-    this._allEventHandler = handler;
-  }
-
-  /**
-   * Registers a global error hook.
-   * @param {Function} handler - The error handler.
-   */
-  onError(handler) {
-    this._errorHandler = handler;
-  }
-
-  /**
-   * Registers a hook to run before a command is executed.
-   * @param {Function} handler - The pre-command hook.
-   */
-  beforeCommand(handler) {
-    this._beforeCommand = handler;
-  }
-
-  /**
-   * Registers a hook to run after a command is executed.
-   * @param {Function} handler - The post-command hook.
-   */
-  afterCommand(handler) {
-    this._afterCommand = handler;
-  }
-
-  /**
-   * Registers an inline command.
-   * @param {string} name - The name of the command.
-   * @param {Function} handler - The command handler.
-   * @param {string|object} [descriptionOrOptions='No description'] - The command description or options.
-   */
+  /** Inline command, supports { slash: true } for slash command registration */
   command(name, handler, descriptionOrOptions = "No description") {
     let description = typeof descriptionOrOptions === "string" ? descriptionOrOptions : (descriptionOrOptions.description || "No description");
     let options = typeof descriptionOrOptions === "object" ? descriptionOrOptions : {};
+    // Wrap handler for slash-only commands to provide default error handling
     let run = handler;
     if (options.slash) {
       run = async function(ctx, ...args) {
@@ -243,18 +248,16 @@ class Bot {
     this.commands.set(name, cmd);
   }
 
-  /**
-   * Registers an inline event handler.
-   * @param {string} eventName - The name of the event.
-   * @param {Function} handler - The event handler.
-   * @param {boolean} [once=false] - Whether the event should only be handled once.
-   */
+  /** Inline event, supports event groups and middleware */
   on(eventName, handler, once = false) {
     const wrapped = (...args) => {
       const ctx = new Ctx(args[0], this);
+      // Event middleware
       if (this._beforeEvent) this._beforeEvent(eventName, ctx, ...args);
+      // Event group logging
       const group = eventName.includes('/') ? eventName.split('/')[0] : null;
       if (group) logger.info(`[${group}] Event: ${eventName}`);
+      // Wildcard listeners
       if (this._wildcardListeners) {
         for (const fn of this._wildcardListeners) fn(eventName, ctx, ...args);
       }
@@ -264,17 +267,80 @@ class Bot {
     else this.client.on(eventName, wrapped);
   }
 
-  /**
-   * Starts the bot.
-   * @returns {Promise<void>}
-   */
   async start() {
+    // Register slash commands with Discord (if enabled)
+    if (this.autoRegisterSlash) {
+      const slashCommands = [];
+      for (const cmd of this.commands.values()) {
+        if (cmd.slash) {
+          slashCommands.push({
+            name: cmd.name,
+            description: cmd.description || 'No description',
+            options: cmd.options || [],
+          });
+        }
+      }
+      if (slashCommands.length) {
+        const { REST, Routes } = require('discord.js');
+        const rest = new REST({ version: '10' }).setToken(this.token);
+        try {
+          if (this.slashMode === 'dev' && this.devGuild && this.clientId) {
+            await rest.put(
+              Routes.applicationGuildCommands(this.clientId, this.devGuild),
+              { body: slashCommands }
+            );
+            logger.info(`Registered ${slashCommands.length} slash commands in dev guild.`);
+          } else if (this.slashMode === 'global' && this.clientId) {
+            await rest.put(
+              Routes.applicationCommands(this.clientId),
+              { body: slashCommands }
+            );
+            logger.info(`Registered ${slashCommands.length} global slash commands.`);
+          } else {
+            logger.warn('clientId or devGuild not set, cannot register slash commands.');
+          }
+        } catch (err) {
+          logger.error('Failed to register slash commands:', err);
+        }
+      }
+    }
+    // Hot-reload safety: clear listeners if restarting
     this.client.removeAllListeners();
 
     await db.init();
     if (this.commandsDir) await loadCommands(this);
-    if (this.eventsDir) await loadEvents(this);
+    if (this.eventsDir) {
+      const fs = require('fs');
+      const path = require('path');
+      const dirPath = path.resolve(this.eventsDir);
+      if (!fs.existsSync(dirPath)) {
+        logger.warn(`Events directory '${dirPath}' does not exist. No events loaded.`);
+      } else {
+        await loadEvents(this);
+      }
+    }
+    
+    // Load plugins from files
+    try {
+      await this.pluginManager.loadAll();
+      logger.info(`✅ Plugin system initialized with ${this.pluginManager.plugins.size} plugins`);
+    } catch (error) {
+      logger.error(`Failed to initialize plugins: ${error.message}`);
+    }
 
+    // Load plugins from code (added via .use())
+    if (this._pendingPlugins) {
+      for (const { PluginClass, pluginName } of this._pendingPlugins) {
+        try {
+          await this.loadPluginFromClass(PluginClass, pluginName);
+        } catch (error) {
+          logger.error(`Failed to load pending plugin: ${error.message}`);
+        }
+      }
+      this._pendingPlugins = [];
+    }
+
+    // Global event hook
     this.client.on('raw', (...args) => {
       if (this._allEventHandler) {
         const ctx = new Ctx(args[0], this);
@@ -284,10 +350,19 @@ class Bot {
 
     this.client.once("ready", () => {
       logger.info(`✅ Logged in as ${this.client.user.tag}`);
+      // Pretty dashboard
       logger.info(`Commands loaded: ${this.commands.size}`);
-      logger.info(`Events loaded: ...`);
+      logger.info(`Events loaded: ...`); // Could count events
+      // Set initial presence if provided
+      if (this.presence) {
+        this.setPresence(this.presence);
+      } else if (this._pendingPresence) {
+        this.setPresence(this._pendingPresence);
+        this._pendingPresence = null;
+      }
     });
 
+    // Slash command handler
     this.client.on("interactionCreate", async interaction => {
       if (!interaction.isCommand()) return;
       const cmd = this.commands.get(interaction.commandName);
@@ -296,9 +371,10 @@ class Bot {
       this._runCommand(cmd, ctx);
     });
 
+    // Prefix command handler
     this.client.on("messageCreate", async msg => {
       if (msg.author.bot || !msg.guild) return;
-      const prefix = await db.getGuildConfig(msg.guild.id, 'prefix', this.prefix);
+  const prefix = await db.getGuildConfig(msg.guild.id, 'prefix', this.prefix);
       if (!msg.content.startsWith(prefix)) return;
       const args = msg.content.slice(prefix.length).trim().split(/\s+/);
       const cmdName = args.shift().toLowerCase();
@@ -309,43 +385,39 @@ class Bot {
       if (!cmd) return;
 
       const ctx = new Ctx(msg, this, args);
+      // Rate limit
       const rateLimit = require('./utils/rateLimit');
       if (!rateLimit.check(ctx.user.id, cmdName)) {
         return ctx.reply('⏳ You are being rate limited.');
       }
+      // Command logging middleware
       require('./utils/stats').logCommand(cmdName, ctx.user.id);
+      // Pre-command hook
       if (this._beforeCommand) await this._beforeCommand(cmd, ctx);
       await this._runCommand(cmd, ctx);
+      // Post-command hook
       if (this._afterCommand) await this._afterCommand(cmd, ctx);
     });
 
     this.client.login(this.token);
   }
 
-  /**
-   * Stops the bot gracefully.
-   * @returns {Promise<void>}
-   */
   async stop() {
+    // Graceful shutdown
     await this.client.destroy();
     logger.info('Bot stopped gracefully.');
   }
 
-  /**
-   * Executes a command.
-   * @param {object} cmd - The command to execute.
-   * @param {Ctx} ctx - The context of the command.
-   * @returns {Promise<void>}
-   * @private
-   */
   async _runCommand(cmd, ctx) {
     if (this._onCommandRun) {
       try { await this._onCommandRun(cmd, ctx); } catch (e) { /* ignore */ }
     }
+    // Dynamic enable/disable per guild
     if (ctx.guild && !this.isCommandEnabled(ctx.guild.id, cmd.name)) {
       return ctx.reply("❌ This command is disabled in this server.");
     }
 
+    // Command inhibitors
     if (this._inhibitors) {
       for (const inhibitor of this._inhibitors) {
         const result = await inhibitor(cmd, ctx);
@@ -354,6 +426,7 @@ class Bot {
       }
     }
 
+    // Command overloads
     if (cmd.overload && cmd.patterns) {
       for (const pattern of cmd.patterns) {
         if (pattern.match(ctx.args)) {
@@ -362,10 +435,12 @@ class Bot {
       }
       return ctx.reply("❌ No matching overload for arguments.");
     }
+    // Per-command before middleware
     if (cmd.before) {
       try { await cmd.before(ctx); } catch (err) { /* ignore */ }
     }
 
+    // Built-in inhibitors
     if (cmd.guildOnly && ctx.isDM) {
       return ctx.reply("❌ This command can only be used in servers.");
     }
@@ -378,6 +453,7 @@ class Bot {
     if (cmd.permissions && !ctx.hasPerms(cmd.permissions)) {
       return ctx.reply("❌ You don’t have permission to use this.");
     }
+    // Cooldown
     const cooldown = cmd.cooldown;
     if (cooldown) {
       const now = Date.now();
@@ -394,20 +470,30 @@ class Bot {
 
     try {
       await cmd.run(ctx);
+      // Per-command after middleware
       if (cmd.after) {
         try { await cmd.after(ctx); } catch (err) { /* ignore */ }
       }
     } catch (err) {
       logger.error(`Error in command ${cmd.name}: ${err.stack}`);
+      let errorSent = false;
+      // Per-command error middleware
       if (cmd.onError) {
-        try { await cmd.onError(err, ctx); } catch (e) { /* ignore */ }
-      } else {
-        ctx.reply("⚠️ Something went wrong.");
+        try { await cmd.onError(err, ctx); errorSent = true; } catch (e) { /* ignore */ }
       }
+      // Global command error hook
       if (this._onCommandError) {
-        try { await this._onCommandError(err, cmd, ctx); } catch (e) { /* ignore */ }
+        try { await this._onCommandError(err, cmd, ctx); errorSent = true; } catch (e) { /* ignore */ }
       }
-      if (this._errorHandler) this._errorHandler(err, cmd, ctx);
+      // Error hook
+      if (this._errorHandler) {
+        try { this._errorHandler(err, cmd, ctx); errorSent = true; } catch (e) { /* ignore */ }
+      }
+      // Always send default error message if not sent
+      if (!errorSent) {
+        await ctx.reply("⚠️ Something went wrong.");
+      }
+      // Error reporting to channel
       const logChannelId = process.env.BOT_LOG_CHANNEL;
       if (logChannelId) {
         const logChannel = this.client.channels.cache.get(logChannelId);

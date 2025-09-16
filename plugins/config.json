@@ -1,0 +1,14 @@
+{
+  "welcome": {
+    "enabled": true,
+    "loadedAt": "2025-09-16T16:53:11.772Z"
+  },
+  "moderation": {
+    "enabled": true,
+    "loadedAt": "2025-09-16T16:53:11.753Z"
+  },
+  "automod": {
+    "enabled": false,
+    "loadedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
