@@ -1,6 +1,14 @@
 const { EmbedBuilder } = require('discord.js');
 
+/**
+ * A builder for creating rich embeds with a fluent API.
+ * @class
+ */
 class BetterEmbed {
+  /**
+   * Creates an instance of BetterEmbed.
+   * @param {Ctx} ctx - The context object.
+   */
   constructor(ctx) {
     this.ctx = ctx;
     this.embed = new EmbedBuilder();
@@ -9,8 +17,26 @@ class BetterEmbed {
     this.embed.setColor(0x5865F2); // Default blue
     this._fields = [];
   }
+
+  /**
+   * Sets the title of the embed.
+   * @param {string} t - The title text.
+   * @returns {BetterEmbed} The embed builder instance.
+   */
   title(t) { this.embed.setTitle(t); return this; }
+
+  /**
+   * Sets the description of the embed.
+   * @param {string} d - The description text.
+   * @returns {BetterEmbed} The embed builder instance.
+   */
   desc(d) { this.embed.setDescription(d); return this; }
+
+  /**
+   * Sets the color of the embed.
+   * @param {string|number} c - The color.
+   * @returns {BetterEmbed} The embed builder instance.
+   */
   color(c) {
     if (typeof c === 'string') {
       const map = { blue: 0x5865F2, green: 0x57F287, red: 0xED4245, yellow: 0xFEE75C };
@@ -20,27 +46,139 @@ class BetterEmbed {
     }
     return this;
   }
+
+  /**
+   * Adds a field to the embed.
+   * @param {string} name - The name of the field.
+   * @param {string} value - The value of the field.
+   * @param {boolean} [inline=false] - Whether the field should be inline.
+   * @returns {BetterEmbed} The embed builder instance.
+   */
   field(name, value, inline = false) {
     if (this._fields.length < 25) {
       this._fields.push({ name, value: value?.toString()?.slice(0, 1024), inline });
     }
     return this;
   }
+
+  /**
+   * Sets the author of the embed.
+   * @param {string} name - The author's name.
+   * @param {string} icon - The author's icon URL.
+   * @returns {BetterEmbed} The embed builder instance.
+   */
   author(name, icon) { this.embed.setAuthor({ name, iconURL: icon }); return this; }
+
+  /**
+   * Sets the footer of the embed.
+   * @param {string} text - The footer text.
+   * @param {string} icon - The footer icon URL.
+   * @returns {BetterEmbed} The embed builder instance.
+   */
   footer(text, icon) { this.embed.setFooter({ text, iconURL: icon }); return this; }
+
+  /**
+   * Sets the thumbnail of the embed.
+   * @param {string} url - The thumbnail URL.
+   * @returns {BetterEmbed} The embed builder instance.
+   */
   thumbnail(url) { this.embed.setThumbnail(url); return this; }
+
+  /**
+   * Sets the image of the embed.
+   * @param {string} url - The image URL.
+   * @returns {BetterEmbed} The embed builder instance.
+   */
   image(url) { this.embed.setImage(url); return this; }
+
+  /**
+   * Sends the embed to the channel.
+   * @param {object} [options={}] - The message options.
+   * @returns {Promise<Message>} The sent message.
+   */
   send(options = {}) {
     if (this._fields.length) this.embed.setFields(this._fields);
     return this.ctx.reply({ embeds: [this.embed], ...options });
   }
+
+  /**
+   * Edits a message with the embed.
+   * @param {Message} msg - The message to edit.
+   * @param {object} [options={}] - The message options.
+   * @returns {Promise<Message>} The edited message.
+   */
   edit(msg, options = {}) {
     if (this._fields.length) this.embed.setFields(this._fields);
     return msg.edit({ embeds: [this.embed], ...options });
   }
 }
+
+/**
+ * The context object, provides a unified interface for interacting with commands and events.
+ * @class
+ */
 class Ctx {
-  /** One-liner embed or builder */
+  /**
+   * Creates an instance of Ctx.
+   * @param {Interaction|Message} raw - The raw interaction or message object.
+   * @param {Bot} bot - The bot instance.
+   * @param {Array<string>} [argsOverride=null] - The arguments override.
+   */
+  constructor(raw, bot, argsOverride = null) {
+    this.raw = raw;
+    this.bot = bot;
+    this.isInteraction = raw?.isCommand?.();
+    this.user = raw?.user || raw?.author;
+    this.guild = raw?.guild || null;
+    this.channel = raw?.channel || null;
+    this.member = raw?.member || null;
+
+    this.args = argsOverride || this._parseArgs(raw);
+    this.options = this.isInteraction ? raw.options.data : [];
+    this.isDM = !this.guild;
+    this.isGuild = !!this.guild;
+  }
+
+  /**
+   * Parses the arguments from the raw object.
+   * @param {Interaction|Message} raw - The raw interaction or message object.
+   * @returns {Array<string>} The parsed arguments.
+   * @private
+   */
+  _parseArgs(raw) {
+    if (this.isInteraction) {
+      return raw.options.data.map(opt => opt.value);
+    }
+    if (raw?.content) {
+      const args = raw.content.trim().split(/\s+/).slice(1);
+      const userMatch = args.find(a => /^<@!?\d+>$/.test(a));
+      const channelMatch = args.find(a => /^<#\d+>$/.test(a));
+      return Object.assign(args, {
+        user: userMatch ? userMatch.replace(/<@!?|>/g, '') : null,
+        channel: channelMatch ? channelMatch.replace(/<#|>/g, '') : null
+      });
+    }
+    return [];
+  }
+
+  /**
+   * Sends a reply to the channel.
+   * @param {string|object} content - The content of the reply.
+   * @param {object} [options={}] - The message options.
+   * @returns {Promise<Message>} The sent message.
+   */
+  async reply(content, options = {}) {
+    if (this.isInteraction) {
+      return this.raw.reply({ content, ...options });
+    }
+    return this.raw.reply(content, options);
+  }
+
+  /**
+   * Sends an embed to the channel.
+   * @param {string|EmbedBuilder} content - The content of the embed.
+   * @returns {Promise<Message>|BetterEmbed} The sent message or embed builder.
+   */
   embed(content) {
     if (typeof content === 'string') {
       return this.reply({ embeds: [new EmbedBuilder().setDescription(content).setColor(0x5865F2).setTimestamp().setFooter({ text: this.bot?.client?.user?.username || 'Bot' })] });
@@ -48,27 +186,106 @@ class Ctx {
     return new BetterEmbed(this);
   }
 
-  /** Preset templates */
+  /**
+   * Reacts to the message with an emoji.
+   * @param {string} emoji - The emoji to react with.
+   * @returns {Promise<void>}
+   */
+  async react(emoji) {
+    if (!this.raw.react) return;
+    return this.raw.react(emoji);
+  }
+
+  /**
+   * Sends a file to the channel.
+   * @param {string} filePath - The path to the file.
+   * @returns {Promise<Message>} The sent message.
+   */
+  async file(filePath) {
+    return this.reply({ files: [filePath] });
+  }
+
+  /**
+   * Defers the reply to the interaction.
+   * @returns {Promise<void>}
+   */
+  async defer() {
+    if (this.isInteraction) return this.raw.deferReply();
+  }
+
+  /**
+   * Sends a follow-up message to the interaction.
+   * @param {string|object} content - The content of the follow-up message.
+   * @returns {Promise<Message>} The sent message.
+   */
+  async followUp(content) {
+    if (this.isInteraction) return this.raw.followUp(content);
+  }
+
+  /**
+   * Checks if the user has the specified permissions.
+   * @param {Array<string>} perms - The permissions to check for.
+   * @returns {boolean} Whether the user has the permissions.
+   */
+  hasPerms(perms) {
+    if (!this.member || !this.member.permissions) return false;
+    return this.member.permissions.has(perms);
+  }
+
+  /**
+   * Sends a success message.
+   * @param {string} msg - The success message.
+   * @returns {Promise<Message>} The sent message.
+   */
   success(msg) {
     return this.reply({ embeds: [new EmbedBuilder().setDescription('✅ ' + msg).setColor(0x57F287).setTimestamp().setFooter({ text: this.bot?.client?.user?.username || 'Bot' })] });
   }
+
+  /**
+   * Sends an error message.
+   * @param {string} msg - The error message.
+   * @returns {Promise<Message>} The sent message.
+   */
   error(msg) {
     return this.reply({ embeds: [new EmbedBuilder().setDescription('❌ ' + msg).setColor(0xED4245).setTimestamp().setFooter({ text: this.bot?.client?.user?.username || 'Bot' })] });
   }
+
+  /**
+   * Sends an info message.
+   * @param {string} msg - The info message.
+   * @returns {Promise<Message>} The sent message.
+   */
   info(msg) {
     return this.reply({ embeds: [new EmbedBuilder().setDescription('ℹ️ ' + msg).setColor(0x5865F2).setTimestamp().setFooter({ text: this.bot?.client?.user?.username || 'Bot' })] });
   }
+
+  /**
+   * Sends a warning message.
+   * @param {string} msg - The warning message.
+   * @returns {Promise<Message>} The sent message.
+   */
   warn(msg) {
     return this.reply({ embeds: [new EmbedBuilder().setDescription('⚠️ ' + msg).setColor(0xFEE75C).setTimestamp().setFooter({ text: this.bot?.client?.user?.username || 'Bot' })] });
   }
-  /** Await a message from the user with filter and timeout */
+
+  /**
+   * Awaits a message from the user.
+   * @param {Function} filter - The filter for the message.
+   * @param {object} [options={}] - The options for the await.
+   * @returns {Promise<Message|null>} The collected message or null.
+   */
   async awaitMessage(filter, options = {}) {
     return await this.channel.awaitMessages({ filter, max: 1, time: options.time || 30000, errors: ['time'] })
       .then(col => col.first())
       .catch(() => null);
   }
 
-  /** Await a reaction from the user, optionally restrict to emojis */
+  /**
+   * Awaits a reaction from the user.
+   * @param {Array<string>} [emojis] - The emojis to await.
+   * @param {object} [options={}] - The options for the await.
+   * @returns {Promise<MessageReaction|null>} The collected reaction or null.
+   */
   async awaitReaction(emojis, options = {}) {
     const filter = (r, u) => u.id === this.user.id && (!emojis || emojis.includes(r.emoji.name));
     return await this.raw.awaitReactions({ filter, max: 1, time: options.time || 30000, errors: ['time'] })
@@ -76,7 +293,13 @@ class Ctx {
       .catch(() => null);
   }
 
-  /** Await a component interaction (button, select, etc) */
+  /**
+   * Awaits a component interaction from the user.
+   * @param {number} type - The type of the component.
+   * @param {Function} filter - The filter for the interaction.
+   * @param {number} [timeout=30000] - The timeout for the await.
+   * @returns {Promise<Interaction|null>} The collected interaction or null.
+   */
   async awaitComponent(type, filter, timeout = 30000) {
     const collector = this.raw.createMessageComponentCollector({ componentType: type, filter, time: timeout });
     return new Promise(resolve => {
@@ -85,7 +308,12 @@ class Ctx {
     });
   }
 
-  /** Paginator API: paginate pages with custom buttons */
+  /**
+   * Paginates through an array of embeds.
+   * @param {Array<EmbedBuilder>} pages - The pages to paginate.
+   * @param {object} [options={}] - The options for the paginator.
+   * @returns {Promise<Message>} The sent message.
+   */
   async paginate(pages, options = {}) {
     let page = 0;
     const buttons = (options.buttons || ['⬅️', '➡️']).map((label, i) => this.button(label, { style: i ? 'primary' : 'secondary' }));
@@ -100,7 +328,13 @@ class Ctx {
     return msg;
   }
 
-  /** UI: create a button with handler */
+  /**
+   * Creates a button.
+   * @param {string} label - The label of the button.
+   * @param {object} [options={}] - The options for the button.
+   * @param {Function} [handler] - The handler for the button.
+   * @returns {ButtonBuilder} The created button.
+   */
   button(label, options = {}, handler) {
     const { ButtonBuilder } = require('discord.js');
     const styleMap = { success: 3, danger: 4, primary: 1, secondary: 2, link: 5 };
@@ -113,7 +347,12 @@ class Ctx {
     return btn;
   }
 
-  /** UI: create a select menu */
+  /**
+   * Creates a select menu.
+   * @param {Array<string>} options - The options for the menu.
+   * @param {Function} [handler] - The handler for the menu.
+   * @returns {ActionRowBuilder} The created menu.
+   */
   menu(options, handler) {
     const { StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
     const menu = new StringSelectMenuBuilder()
@@ -124,22 +363,33 @@ class Ctx {
     return row;
   }
 
-  /** Embed templates */
-  success(msg) {
-    return this.embed({ description: msg, color: 0x57F287 });
-  }
-  error(msg) {
-    return this.embed({ description: msg, color: 0xED4245 });
-  }
-  info(msg) {
-    return this.embed({ description: msg, color: 0x5865F2 });
-  }
-
-  /** Markdown helpers */
+  /**
+   * Makes text bold.
+   * @param {string} str - The text to make bold.
+   * @returns {string} The bolded text.
+   */
   bold(str) { return `**${str}**`; }
+
+  /**
+   * Makes text italic.
+   * @param {string} str - The text to make italic.
+   * @returns {string} The italicized text.
+   */
   italic(str) { return `*${str}*`; }
-  code(str) { return `${str}`; }
-  /** Show a Discord modal for multi-field input */
+
+  /**
+   * Makes text a code block.
+   * @param {string} str - The text to put in a code block.
+   * @returns {string} The code block.
+   */
+  code(str) { return `\`${str}\``; }
+
+  /**
+   * Shows a modal to the user.
+   * @param {Array<object>} fields - The fields for the modal.
+   * @param {object} [options={}] - The options for the modal.
+   * @returns {Promise<object|null>} The submitted data or null.
+   */
   async modal(fields, options = {}) {
     const { ModalBuilder, TextInputBuilder, ActionRowBuilder } = require('discord.js');
     if (!this.isInteraction || !this.raw.showModal) throw new Error('Modals require an interaction context');
@@ -155,7 +405,6 @@ class Ctx {
       modal.addComponents(new ActionRowBuilder().addComponents(input));
     });
     await this.raw.showModal(modal);
-    // Wait for modal submit
     const filter = i => i.customId === modal.data.custom_id && i.user.id === this.user.id;
     const submitted = await this.raw.awaitModalSubmit({ filter, time: options.timeout || 30000 }).catch(() => null);
     if (!submitted) return null;
@@ -166,7 +415,13 @@ class Ctx {
     await submitted.reply({ content: options.thankYou || 'Thank you!', ephemeral: true });
     return result;
   }
-  /** Multi-step dialog: ask questions, collect answers */
+
+  /**
+   * Creates a multi-step dialog.
+   * @param {Array<string>} steps - The steps of the dialog.
+   * @param {object} [options={}] - The options for the dialog.
+   * @returns {Promise<Array<string>>} The collected answers.
+   */
   async dialog(steps, options = {}) {
     const answers = [];
     for (const prompt of steps) {
@@ -184,7 +439,14 @@ class Ctx {
     }
     return answers;
   }
-  /** Await button interactions and handle by customId, with default 30s timeout and timeout message edit */
+
+  /**
+   * Awaits button interactions.
+   * @param {Message} msg - The message with the buttons.
+   * @param {object} handlers - The handlers for the buttons.
+   * @param {object} [options={}] - The options for the await.
+   * @returns {Promise<Collector>} The collector.
+   */
   async awaitButton(msg, handlers, options = {}) {
     const timeout = options.time ?? 30000;
     const collector = msg.createMessageComponentCollector({ ...options, time: timeout });
@@ -202,7 +464,11 @@ class Ctx {
     });
     return collector;
   }
-  /** Delete invoking message or interaction */
+
+  /**
+   * Deletes the invoking message or interaction.
+   * @returns {Promise<void>}
+   */
   async delete() {
     if (this.isInteraction && this.raw.deferred) {
       return this.raw.deleteReply();
@@ -213,9 +479,13 @@ class Ctx {
     throw new Error('Cannot delete this context');
   }
 
-  /** Paginator system: embed pages with ⬅️➡️ buttons */
+  /**
+   * Paginates through an array of embeds.
+   * @param {Array<EmbedBuilder>} pages - The pages to paginate.
+   * @param {object} [options={}] - The options for the paginator.
+   * @returns {Promise<Message>} The sent message.
+   */
   async paginator(pages, options = {}) {
-    // pages: array of embed objects
     let page = 0;
     const row = this.buttonRow([
       { customId: 'prev', label: '⬅️', style: 2 },
@@ -231,7 +501,11 @@ class Ctx {
     return msg;
   }
 
-  /** Create a button row from array of button data */
+  /**
+   * Creates a row of buttons.
+   * @param {Array<object>} buttons - The buttons to create.
+   * @returns {ActionRowBuilder} The created button row.
+   */
   buttonRow(buttons) {
     const { ActionRowBuilder, ButtonBuilder } = require('discord.js');
     return new ActionRowBuilder().addComponents(
@@ -239,7 +513,13 @@ class Ctx {
     );
   }
 
-  /** Wait for message or reaction with filter and timeout */
+  /**
+   * Waits for a message or reaction.
+   * @param {string} type - The type of event to wait for.
+   * @param {Function} filter - The filter for the event.
+   * @param {number} [timeout=15000] - The timeout for the await.
+   * @returns {Promise<Message|MessageReaction|null>} The collected event or null.
+   */
   async waitFor(type, filter, timeout = 15000) {
     if (type === 'message') {
       return await this.channel.awaitMessages({ filter, max: 1, time: timeout, errors: ['time'] })
@@ -254,29 +534,21 @@ class Ctx {
     throw new Error('Unknown waitFor type');
   }
 
-  /** Auto-parse mentions in args to ctx.args.user, ctx.args.channel, etc */
-  _parseArgs(raw) {
-    if (this.isInteraction) {
-      return raw.options.data.map(opt => opt.value);
-    }
-    if (raw?.content) {
-      const args = raw.content.trim().split(/\s+/).slice(1);
-      // Parse user/channel mentions
-      const userMatch = args.find(a => /^<@!?\d+>$/.test(a));
-      const channelMatch = args.find(a => /^<#\d+>$/.test(a));
-      return Object.assign(args, {
-        user: userMatch ? userMatch.replace(/<@!?|>/g, '') : null,
-        channel: channelMatch ? channelMatch.replace(/<#|>/g, '') : null
-      });
-    }
-    return [];
-  }
-
-  /** Pick a random element from an array */
+  /**
+   * Picks a random element from an array.
+   * @param {Array} arr - The array to pick from.
+   * @returns {*} A random element from the array.
+   */
   randomChoice(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
   }
-  /** Send a DM to a user (User object or ID) */
+
+  /**
+   * Sends a direct message to a user.
+   * @param {User|string} user - The user to DM.
+   * @param {string|object} content - The content of the DM.
+   * @returns {Promise<Message>} The sent message.
+   */
   async dm(user, content) {
     let userObj = user;
     if (typeof user === 'string') {
@@ -285,72 +557,24 @@ class Ctx {
     if (!userObj || !userObj.send) throw new Error('Invalid user');
     return await userObj.send(content);
   }
-  /** Fetch a user by ID */
+
+  /**
+   * Fetches a user by their ID.
+   * @param {string} id - The ID of the user to fetch.
+   * @returns {Promise<User>} The fetched user.
+   */
   async fetchUser(id) {
     return await this.bot.client.users.fetch(id);
   }
 
-  /** Fetch a member by ID (in current guild) */
+  /**
+   * Fetches a member by their ID from the current guild.
+   * @param {string} id - The ID of the member to fetch.
+   * @returns {Promise<GuildMember>} The fetched member.
+   */
   async fetchMember(id) {
     if (!this.guild) throw new Error('No guild context');
     return await this.guild.members.fetch(id);
-  }
-  constructor(raw, bot, argsOverride = null) {
-    this.raw = raw;
-    this.bot = bot;
-    this.isInteraction = raw?.isCommand?.();
-    this.user = raw?.user || raw?.author;
-    this.guild = raw?.guild || null;
-    this.channel = raw?.channel || null;
-    this.member = raw?.member || null;
-
-    this.args = argsOverride || this._parseArgs(raw);
-    this.options = this.isInteraction ? raw.options.data : [];
-    this.isDM = !this.guild;
-    this.isGuild = !!this.guild;
-  }
-
-  _parseArgs(raw) {
-    if (this.isInteraction) {
-      return raw.options.data.map(opt => opt.value);
-    }
-    if (raw?.content) {
-      return raw.content.trim().split(/\s+/).slice(1);
-    }
-    return [];
-  }
-
-  async reply(content, options = {}) {
-    if (this.isInteraction) {
-      return this.raw.reply({ content, ...options });
-    }
-    return this.raw.reply(content, options);
-  }
-
-  async embed(embedObj) {
-    return this.reply({ embeds: [embedObj] });
-  }
-
-  async react(emoji) {
-    if (!this.raw.react) return;
-    return this.raw.react(emoji);
-  }
-
-  async file(filePath) {
-    return this.reply({ files: [filePath] });
-  }
-
-  async defer() {
-    if (this.isInteraction) return this.raw.deferReply();
-  }
-
-  async followUp(content) {
-    if (this.isInteraction) return this.raw.followUp(content);
-  }
-
-  hasPerms(perms) {
-    if (!this.member || !this.member.permissions) return false;
-    return this.member.permissions.has(perms);
   }
 }
 

@@ -3,6 +3,11 @@ const path = require("path");
 const Ctx = require("../utils/ctx");
 const logger = require("../utils/logger");
 
+/**
+ * Loads all event files from the specified directory and registers them with the bot's client.
+ * @param {Bot} bot - The bot instance.
+ * @returns {Promise<void>}
+ */
 async function loadEvents(bot) {
   const eventsPath = path.resolve(process.cwd(), bot.eventsDir);
 
