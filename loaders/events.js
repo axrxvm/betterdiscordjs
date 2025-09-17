@@ -21,7 +21,11 @@ async function loadEvents(bot) {
     const handler = require(path.join(eventsPath, file));
 
     const wrapped = (...args) => {
-      const ctx = new Ctx(args[0], bot);
+      // For events like 'ready' that don't have a message/interaction, pass null
+      const firstArg = args[0];
+      const ctx = firstArg && (firstArg.author || firstArg.user || firstArg.isCommand) 
+        ? new Ctx(firstArg, bot) 
+        : { bot, client: bot.client };
       return handler(ctx, ...args, bot);
     };
 
@@ -33,3 +37,7 @@ async function loadEvents(bot) {
 }
 
 module.exports = loadEvents;
+
+
+
+

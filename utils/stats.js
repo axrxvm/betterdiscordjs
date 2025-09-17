@@ -26,3 +26,5 @@ function getTopCommands(n = 5) {
 }
 
 module.exports = { logCommand, getTopCommands };
+
+

@@ -98,3 +98,5 @@ class WelcomePlugin extends BasePlugin {
 }
 
 module.exports = WelcomePlugin;
+
+

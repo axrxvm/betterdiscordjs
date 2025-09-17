@@ -1,100 +1,133 @@
-# better-djs
+# betterdiscordjs
 
-A modern, modular, and extensible Discord bot framework for Node.js, designed for building powerful and scalable bots with ease.
+[![npm version](https://badge.fury.io/js/betterdiscordjs.svg)](https://badge.fury.io/js/betterdiscordjs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Discord.js](https://img.shields.io/badge/discord.js-v14.22.1-blue.svg)](https://discord.js.org/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D16.9.0-brightgreen.svg)](https://nodejs.org/)
 
-## About The Project
+A modern, modular and dev-friendly discord.js
 
-better-djs provides a robust foundation for creating Discord bots, offering a rich set of features out-of-the-box while maintaining a focus on clean, readable, and easily extensible code. Whether you're building a small bot for your server or a large, sharded application, this framework is designed to scale with your needs.
+## ✨ Features
 
-### Features
+- 🎯 **Unified Commands** - Support for both slash and prefix commands
+- 🔧 **Enhanced Context** - Simplified Discord API interactions with `ctx` object
+- 📦 **Plugin System** - Modular architecture with built-in plugins
+- ⚡ **Hot Reloading** - Development-friendly command and event reloading
+- 🛡️ **Built-in Security** - Rate limiting, permissions, and error handling
+- 📊 **Statistics & Logging** - Command tracking with beautiful colored logs
+- 🎨 **Rich Embeds** - Intuitive embed builder with fluent API
+- ⏰ **Task Scheduling** - Cron jobs and interval-based tasks
 
--   **Command Handling**: Supports both slash and prefix-based commands, as well as context menus.
--   **Context Helpers (ctx)**: An advanced context object that simplifies interactions with Discord's API.
--   **Embed Builder**: A powerful and intuitive builder for creating rich embeds.
--   **Task Scheduling**: Includes a scheduler for running cron jobs and other timed tasks.
--   **Configuration**: Per-guild and per-user configuration management.
--   **Hot-Reloading**: Automatically reloads commands and events on file changes for rapid development.
--   **Extensibility**: Middleware, inhibitors, and overloads allow for custom logic and behavior.
--   **Event Management**: Group events and use wildcard listeners for flexible event handling.
--   **Utilities**: A suite of advanced utilities including caching, sessions, queues, and more.
--   **Logging and Stats**: Built-in command logging, statistics, and rate limiting.
--   **Developer-Friendly**: Beautiful, color-coded logs for easy debugging.
+## 🚀 Quick Start
 
-## Getting Started
-
-Follow these simple steps to get your bot up and running.
-
-### Prerequisites
-
--   [Node.js](https://nodejs.org/) (v16.9.0 or higher)
--   [npm](https://www.npmjs.com/) (or your preferred package manager)
-
-### Installation
-
-1.  **Clone the repository:**
-    ```sh
-    git clone https://github.com/your-username/better-djs.git
-    ```
-2.  **Install dependencies:**
-    ```sh
-    npm install
-    ```
-3.  **Set up your environment variables:**
-
-    Create a `.env` file in the root of your project and add the following variables:
-
-    ```env
-    TOKEN=your_bot_token_here
-    CLIENT_ID=your_bot_client_id_here
-    ```
-
-### Running the Bot
-
-To start your bot, simply run:
-
-```sh
-node index.js
+```bash
+npm install betterdiscordjs
 ```
 
-## Project Structure
+```javascript
+const { Bot } = require('betterdiscordjs');
 
-The framework is organized into the following directories:
+const bot = new Bot(process.env.DISCORD_TOKEN, {
+  prefix: '!',
+  commandsDir: './commands',
+  eventsDir: './events'
+});
 
--   `Bot.js`: The main bot class that ties everything together.
--   `index.js`: The entry point for the application.
--   `loaders/`: Contains the loaders for commands and events.
-    -   `commands.js`: Loads all command files.
-    -   `events.js`: Loads all event handlers.
--   `utils/`: A collection of advanced utilities.
-    -   `cache.js`: Caching utilities.
-    -   `colors.js`: Color definitions for logging.
-    -   `ctx.js`: The context helper object.
-    -   `db.js`: Database utilities.
-    -   `logger.js`: The logging utility.
-    -   `queue.js`: Queue management.
-    -   `rateLimit.js`: Rate limiting for commands.
-    -   `scheduler.js`: Task scheduling.
-    -   `session.js`: Session management.
-    -   `stats.js`: Statistics tracking.
-    -   `time.js`: Time and duration utilities.
--   `testbot/`: An example bot implementation.
+// Inline command
+bot.command('ping', async (ctx) => {
+  await ctx.reply('🏓 Pong!');
+});
 
-## Philosophy
+// Event handler
+bot.on('ready', (ctx) => {
+  console.log(`${ctx.user.tag} is ready!`);
+});
 
--   **Clean and Readable**: Code should be easy to understand and maintain.
--   **Extensible and Customizable**: The framework is designed to be easily extended and adapted to your specific needs.
--   **Scalable**: From small personal bots to large, sharded applications, the framework is built to scale.
+bot.start();
+```
 
-## Contributing
+## 📖 Documentation
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+- 📚 [Full Documentation](./docs/README.md)
+- 🚀 [Quick Start Guide](./docs/getting-started/quick-start.md)
+- 🔌 [Plugin Development](./docs/plugins/creating-plugins.md)
+- 📋 [API Reference](./docs/api/bot.md)
+- 💡 [Examples](./docs/examples/)
 
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+## 🏗️ Project Structure
 
-## License
+```
+├── Bot.js              # Main bot class
+├── index.js            # Framework entry point
+├── loaders/            # Command and event loaders
+├── plugins/            # Plugin system and built-in plugins
+├── utils/              # Utilities (cache, logger, scheduler, etc.)
+├── testbot/            # Example bot implementation
+└── docs/               # Comprehensive documentation
+```
 
-Distributed under the MIT License. See `LICENSE` for more information.
+## 🔌 Plugin System
+
+betterdiscordjs includes a powerful plugin system with built-in plugins:
+
+```javascript
+const { Bot, plugins } = require('betterdiscordjs');
+
+const bot = new Bot(token)
+  .use(plugins.WelcomePlugin)
+  .use(plugins.ModerationPlugin)
+  .use(plugins.AutoModPlugin);
+
+bot.start();
+```
+
+## 🛠️ Requirements
+
+- Node.js 16.9.0 or higher
+- Discord.js v14.22.1
+- A Discord bot token
+
+## 📦 Installation
+
+### Using the Framework
+```bash
+npm install betterdiscordjs
+```
+
+### Development Setup
+```bash
+git clone https://github.com/axrxvm/betterdiscordjs.git
+cd betterdiscordjs
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](./CONTRIBUTING.md).
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- 📖 [Documentation](./docs/README.md)
+- 🐛 [Issues](https://github.com/axrxvm/betterdiscordjs/issues)
+- 💬 [Discussions](https://github.com/axrxvm/betterdiscordjs/discussions)
+
+## 🙏 Acknowledgments
+
+- Built on top of the powerful [discord.js](https://discord.js.org/)
+- Inspired by modern web frameworks
+- Made with ❤️ for the Discord developer community
+
+---
+
+**[⭐ Star this repo](https://github.com/axrxvm/betterdiscordjs) if you find it helpful!**
+
+

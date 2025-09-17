@@ -1,6 +1,6 @@
 # Plugin System
 
-The BetterDJS plugin system allows you to easily add or remove features from your bot without modifying the core code. You can load plugins from files or directly from code.
+The betterdiscordjs plugin system allows you to easily add or remove features from your bot without modifying the core code. You can load plugins from files or directly from code.
 
 ## Features
 
@@ -18,7 +18,7 @@ The BetterDJS plugin system allows you to easily add or remove features from you
 ### Method 1: Using .use() (Recommended)
 
 ```javascript
-const { Bot, plugins } = require('better-djs');
+const { Bot, plugins } = require('betterdiscordjs');
 
 const bot = new Bot(process.env.DISCORD_TOKEN)
   .use(plugins.WelcomePlugin)
@@ -31,7 +31,7 @@ bot.start();
 ### Method 2: Load after bot creation
 
 ```javascript
-const { Bot, plugins } = require('better-djs');
+const { Bot, plugins } = require('betterdiscordjs');
 
 const bot = new Bot(process.env.DISCORD_TOKEN);
 
@@ -45,7 +45,7 @@ bot.start();
 ### Method 3: Custom inline plugins
 
 ```javascript
-const { Bot, BasePlugin } = require('better-djs');
+const { Bot, BasePlugin } = require('betterdiscordjs');
 
 class MyPlugin extends BasePlugin {
   constructor(bot, pluginManager) {
@@ -139,7 +139,7 @@ Automatic moderation with spam detection and word filtering.
 ### Basic Plugin Structure
 
 ```javascript
-const { BasePlugin } = require('better-djs');
+const { BasePlugin } = require('betterdiscordjs');
 
 class MyPlugin extends BasePlugin {
   constructor(bot, pluginManager) {
@@ -307,3 +307,5 @@ Plugins loaded from code are automatically added to this configuration with `loa
 ## Examples
 
 Check the `examples/` directory for complete working examples of how to use the plugin system in different scenarios.
+
+

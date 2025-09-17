@@ -23,3 +23,5 @@ function check(userId, key, max = 5, windowMs = 5000) {
 }
 
 module.exports = { check };
+
+

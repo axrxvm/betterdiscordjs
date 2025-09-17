@@ -39,7 +39,16 @@ class BetterEmbed {
    */
   color(c) {
     if (typeof c === 'string') {
-      const map = { blue: 0x5865F2, green: 0x57F287, red: 0xED4245, yellow: 0xFEE75C };
+      const map = {
+        blue: 0x5865F2,
+        green: 0x57F287,
+        red: 0xED4245,
+        yellow: 0xFEE75C,
+        purple: 0x9B59B6,
+        orange: 0xE67E22,
+        gold: 0xF1C40F,
+        random: Math.floor(Math.random() * 16777215) // Generate random color
+      };
       this.embed.setColor(map[c.toLowerCase()] || c);
     } else {
       this.embed.setColor(c);
@@ -92,6 +101,13 @@ class BetterEmbed {
   image(url) { this.embed.setImage(url); return this; }
 
   /**
+   * Sets the timestamp of the embed.
+   * @param {Date|number} [time] - The timestamp (defaults to current time).
+   * @returns {BetterEmbed} The embed builder instance.
+   */
+  timestamp(time) { this.embed.setTimestamp(time); return this; }
+
+  /**
    * Sends the embed to the channel.
    * @param {object} [options={}] - The message options.
    * @returns {Promise<Message>} The sent message.
@@ -127,6 +143,7 @@ class Ctx {
   constructor(raw, bot, argsOverride = null) {
     this.raw = raw;
     this.bot = bot;
+    this.client = bot.client;
     this.isInteraction = raw?.isCommand?.();
     this.user = raw?.user || raw?.author;
     this.guild = raw?.guild || null;
@@ -162,6 +179,61 @@ class Ctx {
   }
 
   /**
+   * Gets an option value from slash command options.
+   * @param {string} name - The name of the option.
+   * @returns {*} The option value or null if not found.
+   */
+  getOption(name) {
+    if (!this.isInteraction) return null;
+    const option = this.options.find(opt => opt.name === name);
+    return option ? option.value : null;
+  }
+
+  /**
+   * Gets a user from slash command options.
+   * @param {string} name - The name of the user option.
+   * @returns {User|null} The user object or null if not found.
+   */
+  getUser(name) {
+    if (!this.isInteraction) return null;
+    const option = this.options.find(opt => opt.name === name && opt.type === 6); // USER type
+    return option ? option.user : null;
+  }
+
+  /**
+   * Gets a member from slash command options.
+   * @param {string} name - The name of the member option.
+   * @returns {GuildMember|null} The member object or null if not found.
+   */
+  getMember(name) {
+    if (!this.isInteraction) return null;
+    const option = this.options.find(opt => opt.name === name && opt.type === 6); // USER type
+    return option ? option.member : null;
+  }
+
+  /**
+   * Gets a channel from slash command options.
+   * @param {string} name - The name of the channel option.
+   * @returns {Channel|null} The channel object or null if not found.
+   */
+  getChannel(name) {
+    if (!this.isInteraction) return null;
+    const option = this.options.find(opt => opt.name === name && opt.type === 7); // CHANNEL type
+    return option ? option.channel : null;
+  }
+
+  /**
+   * Gets a role from slash command options.
+   * @param {string} name - The name of the role option.
+   * @returns {Role|null} The role object or null if not found.
+   */
+  getRole(name) {
+    if (!this.isInteraction) return null;
+    const option = this.options.find(opt => opt.name === name && opt.type === 8); // ROLE type
+    return option ? option.role : null;
+  }
+
+  /**
    * Sends a reply to the channel.
    * @param {string|object} content - The content of the reply.
    * @param {object} [options={}] - The message options.
@@ -169,6 +241,18 @@ class Ctx {
    */
   async reply(content, options = {}) {
     if (this.isInteraction) {
+      // If interaction is deferred, use followUp instead of reply
+      if (this.raw.deferred) {
+        if (typeof content === 'object' && content !== null) {
+          return this.raw.followUp({ ...content, ...options });
+        }
+        return this.raw.followUp({ content, ...options });
+      }
+
+      // If content is an object (like { embeds: [...] }), use it directly
+      if (typeof content === 'object' && content !== null) {
+        return this.raw.reply({ ...content, ...options });
+      }
       return this.raw.reply({ content, ...options });
     }
     return this.raw.reply(content, options);
@@ -579,3 +663,5 @@ class Ctx {
 }
 
 module.exports = Ctx;
+
+

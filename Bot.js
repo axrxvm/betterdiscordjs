@@ -197,7 +197,7 @@ class Bot {
      * @param {string} [options.prefix] - The default command prefix (default: "!").
      */
     this.token = token || process.env.DISCORD_TOKEN;
-    if (!this.token) throw new Error("[better-djs] No token provided!");
+    if (!this.token) throw new Error("[betterdiscordjs] No token provided!");
 
     this.client = new Client({
       intents: [
@@ -225,7 +225,7 @@ class Bot {
 
     /** Change the bot's prefix at runtime and persist it for a guild */
     this.setPrefix = async (guildId, newPrefix) => {
-      await db.setPrefix(guildId, newPrefix);
+      await db.setGuildConfig(guildId, 'prefix', newPrefix);
       logger.info(`Prefix for guild ${guildId} changed to: ${newPrefix}`);
     };
   }
@@ -348,7 +348,7 @@ class Bot {
       }
     });
 
-    this.client.once("ready", () => {
+    this.client.once("clientReady", () => {
       logger.info(`✅ Logged in as ${this.client.user.tag}`);
       // Pretty dashboard
       logger.info(`Commands loaded: ${this.commands.size}`);
@@ -504,3 +504,4 @@ class Bot {
 }
 
 module.exports = Bot;
+

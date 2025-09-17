@@ -63,7 +63,7 @@ async function loadCommands(bot) {
 
   walk(commandsPath);
 
-  bot.client.once("ready", async () => {
+  bot.client.once("clientReady", async () => {
     const rest = new REST({ version: "10" }).setToken(bot.token);
     try {
       if (bot.devGuild) {
@@ -86,3 +86,7 @@ async function loadCommands(bot) {
 }
 
 module.exports = loadCommands;
+
+
+
+

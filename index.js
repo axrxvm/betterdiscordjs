@@ -1,7 +1,7 @@
 /**
- * @file The main entry point for the better-djs framework.
+ * @file The main entry point for the betterdiscordjs framework.
  * @author Your Name
- * @see {@link https://github.com/your-username/better-djs}
+ * @see {@link https://github.com/axrxvm/betterdiscordjs}
  */
 
 const Bot = require("./Bot");
@@ -19,8 +19,8 @@ const ModerationPlugin = require("./plugins/moderation");
 const AutoModPlugin = require("./plugins/automod");
 
 /**
- * The main export of the better-djs framework.
- * @module better-djs
+ * The main export of the betterdiscordjs framework.
+ * @module betterdiscordjs
  * @property {Bot} Bot - The main Bot class.
  * @property {object} time - Time and duration utilities.
  * @property {object} colors - Color definitions for logging.
@@ -42,3 +42,5 @@ module.exports = {
     AutoModPlugin
   }
 };
+
+

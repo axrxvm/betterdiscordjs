@@ -75,3 +75,5 @@ async function setUserConfig(userId, key, value) {
 }
 
 module.exports = { init, getGuildConfig, setGuildConfig, getUserConfig, setUserConfig };
+
+
