@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'docs/**'
 
 jobs:
   sync:
@@ -21,7 +19,7 @@ jobs:
           path: wiki
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync docs
+      - name: Sync docs into wiki
         run: |
           rsync -av --delete docs/ wiki/
           cd wiki
