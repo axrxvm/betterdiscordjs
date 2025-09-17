@@ -1,6 +1,6 @@
 # betterdiscordjs
 
-[![npm version](https://badge.fury.io/js/betterdiscordjs.svg)](https://badge.fury.io/js/betterdiscordjs)
+[![npm version](https://badge.fury.io/js/betterdiscordjs.svg)](https://badge.fury.io/js/@axrxvm/betterdiscordjs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Discord.js](https://img.shields.io/badge/discord.js-v14.22.1-blue.svg)](https://discord.js.org/)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D16.9.0-brightgreen.svg)](https://nodejs.org/)
