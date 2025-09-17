@@ -21,11 +21,11 @@ A modern, modular and dev-friendly discord.js
 ## 🚀 Quick Start
 
 ```bash
-npm install betterdiscordjs
+npm install @axrxvm/betterdiscordjs
 ```
 
 ```javascript
-const { Bot } = require('betterdiscordjs');
+const { Bot } = require('@axrxvm/betterdiscordjs');
 
 const bot = new Bot(process.env.DISCORD_TOKEN, {
   prefix: '!',
@@ -71,7 +71,7 @@ bot.start();
 betterdiscordjs includes a powerful plugin system with built-in plugins:
 
 ```javascript
-const { Bot, plugins } = require('betterdiscordjs');
+const { Bot, plugins } = require('@axrxvm/betterdiscordjs');
 
 const bot = new Bot(token)
   .use(plugins.WelcomePlugin)
@@ -91,7 +91,7 @@ bot.start();
 
 ### Using the Framework
 ```bash
-npm install betterdiscordjs
+npm install @axrxvm/betterdiscordjs
 ```
 
 ### Development Setup
