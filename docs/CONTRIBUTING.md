@@ -47,7 +47,7 @@ This project adheres to a code of conduct. By participating, you are expected to
 
 1. **Fork and clone the repository:**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/betterdiscordjs.git
+   git clone https://github.com/axrxvm/betterdiscordjs.git
    cd betterdiscordjs
    ```
 
