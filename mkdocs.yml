@@ -1,0 +1,110 @@
+site_name: betterdiscordjs
+site_description: Official documentation for BetterDiscordJS
+site_url: https://axrxvm.github.io/betterdiscordjs/
+
+repo_url: https://github.com/axrxvm/betterdiscordjs
+repo_name: axrxvm/betterdiscordjs
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - content.action.view
+    - toc.follow
+    - navigation.top
+    - navigation.footer
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+
+  - Getting Started:
+      - Installation & Setup: getting-started/installation.md
+      - Quick Start Guide: getting-started/quick-start.md
+      - Configuration: getting-started/configuration.md
+      - Your First Bot: getting-started/first-bot.md
+
+  - Core Concepts:
+      - Bot Class: core/bot-class.md
+      - Context (Ctx) Object: core/context.md
+      - Commands: core/commands.md
+      - Events: core/events.md
+      - Database & Storage: core/database.md
+
+  - Plugin System:
+      - Plugin Overview: plugins/overview.md
+      - Creating Plugins: plugins/creating-plugins.md
+      - Built-in Plugins: plugins/built-in-plugins.md
+      - Plugin API Reference: plugins/api-reference.md
+
+  - Utilities:
+      - Logger: utilities/logger.md
+      - Time Parser: utilities/time.md
+      - Rate Limiting: utilities/rate-limiting.md
+      - Scheduler: utilities/scheduler.md
+      - Cache System: utilities/cache.md
+
+  - Advanced Features:
+      - Embed Builder: advanced/embed-builder.md
+      - Component Interactions: advanced/components.md
+      - Modals & Forms: advanced/modals.md
+      - Pagination: advanced/pagination.md
+      - Error Handling: advanced/error-handling.md
+      - Middleware & Hooks: advanced/middleware.md
+
+  - Examples:
+      - Basic Bot Examples: examples/basic-bots.md
+      - Command Examples: examples/commands.md
+      - Plugin Examples: examples/plugins.md
+      - Advanced Use Cases: examples/advanced.md
+
+  - API Reference:
+      - Bot Class API: api/bot.md
+      - Context API: api/context.md
+      - Plugin API: api/plugin.md
+      - Utilities API: api/utilities.md
+
+  - Deployment Guide:
+      - Deployment Guide: deployment/deployment.md
+      - Best Practices: deployment/best-practices.md
+
+  - Help & Support:
+      - FAQ: faq.md
+      - Troubleshooting: troubleshooting.md
+      - Contributing: CONTRIBUTING.md

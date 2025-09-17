@@ -204,7 +204,7 @@ If you encounter issues:
 1. Check the [FAQ](../faq.md)
 2. Review the [troubleshooting guide](../troubleshooting.md)
 3. Join our [Discord server](https://discord.gg/your-server)
-4. Create an [issue on GitHub](https://github.com/your-repo/@axrxvm/betterdiscordjs/issues)
+4. Create an [issue on GitHub](https://github.com/axrxvm/betterdiscordjs/issues)
 
 ## Next Steps
 
@@ -213,7 +213,7 @@ Now that you have @axrxvm/betterdiscordjs installed:
 1. 📖 Read the [Quick Start Guide](./quick-start.md)
 2. 🔧 Learn about [Configuration](./configuration.md)
 3. 🤖 Build [Your First Bot](./first-bot.md)
-4. 📚 Explore the [Core Concepts](../core/README.md)
+4. 📚 Explore the [Core Concepts](../core/bot-class.md)
 
 ---
 

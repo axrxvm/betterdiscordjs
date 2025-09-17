@@ -308,10 +308,10 @@ node index.js
 Now that you have a basic bot running:
 
 1. 📖 Learn about [Configuration Options](./configuration.md)
-2. 🏗️ Explore [Core Concepts](../core/README.md)
+2. 🏗️ Explore [Core Concepts](../core/bot-class.md)
 3. 📦 Try the [Plugin System](../plugins/overview.md)
 4. 🎨 Master the [Embed Builder](../advanced/embed-builder.md)
-5. 🔧 Add [Advanced Features](../advanced/README.md)
+5. 🔧 Add [Advanced Features](../advanced/components.md)
 
 ## 💡 Tips for Beginners
 
@@ -323,8 +323,8 @@ Now that you have a basic bot running:
 
 ## 🆘 Need Help?
 
-- 📖 Check the [full documentation](../README.md)
-- 🐛 Report issues on [GitHub](https://github.com/axrxvm/@axrxvm/betterdiscordjs/issues)
+- 📖 Check the [full documentation](../index.md)
+- 🐛 Report issues on [GitHub](https://github.com/axrxvm/betterdiscordjs/issues)
 - 💬 Join our [Discord community](https://discord.gg/your-server)
 
 ---
