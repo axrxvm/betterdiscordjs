@@ -241,7 +241,7 @@ Registers a wildcard event listener that fires for any processed event, receivin
 
 ### Plugin Management
 
-The bot features a robust plugin system for modularizing and extending functionality. See the [Plugin Overview](../../plugins/overview.md) for more details on creating plugins.
+The bot features a robust plugin system for modularizing and extending functionality. See the [Plugin Overview](../plugins/overview.md) for more details on creating plugins.
 
 #### bot.use(PluginClass, pluginName)
 Registers a plugin class to be loaded when `bot.start()` is called. This is the recommended, chainable method for adding plugins.
