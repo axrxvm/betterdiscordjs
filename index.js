@@ -1,6 +1,6 @@
 /**
  * @file The main entry point for the betterdiscordjs framework.
- * @author Your Name
+ * @author Aarav Mehta
  * @see {@link https://github.com/axrxvm/betterdiscordjs}
  */
 

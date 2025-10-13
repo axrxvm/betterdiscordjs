@@ -1,15 +1,22 @@
-const { Low } = require('lowdb');
-const { JSONFile } = require('lowdb/node');
-const path = require('path');
+const { Low } = require("lowdb");
+const { JSONFile } = require("lowdb/node");
+const path = require("path");
+const fs = require("fs");
 
-const file = path.resolve(__dirname, '../data/botdata.json');
+// Ensure data directory exists in project root
+const dataDir = path.resolve(process.cwd(), "data");
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const file = path.join(dataDir, "botdata.json");
 const adapter = new JSONFile(file);
 
 /**
  * The LowDB instance for the bot.
  * @type {Low}
  */
-const db = new Low(adapter, { guilds: {} });
+const db = new Low(adapter, { guilds: {}, users: {} });
 
 /**
  * Initializes the database, creating the data file if it doesn't exist.
@@ -17,7 +24,7 @@ const db = new Low(adapter, { guilds: {} });
  */
 async function init() {
   await db.read();
-  db.data ||= { guilds: {} };
+  db.data ||= { guilds: {}, users: {} };
   await db.write();
 }
 
@@ -75,5 +82,3 @@ async function setUserConfig(userId, key, value) {
 }
 
 module.exports = { init, getGuildConfig, setGuildConfig, getUserConfig, setUserConfig };
-
-
