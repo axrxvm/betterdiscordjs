@@ -137,6 +137,7 @@ npm run typecheck    # Type-check without emitting
 ## IDE Support
 
 All major IDEs with TypeScript support will provide:
+
 - IntelliSense/autocomplete
 - Type checking
 - Parameter hints

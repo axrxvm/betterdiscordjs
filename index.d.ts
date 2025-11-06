@@ -1,4 +1,4 @@
-import { Bot, BotConfig, Command, CommandContext, EventHandler } from './Bot';
+import { Bot, BotConfig, Command, CommandContext, EventHandler, Event } from './Bot';
 import { BasePlugin, PluginManager } from './plugins/BasePlugin';
 import { Database } from './utils/db';
 import { logger } from './utils/logger';
@@ -26,6 +26,7 @@ export {
   Command,
   CommandContext,
   EventHandler,
+  Event,
   BasePlugin,
   PluginManager,
   Database,

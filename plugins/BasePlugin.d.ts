@@ -1,4 +1,4 @@
-import { Bot } from './Bot';
+import { Bot } from '../Bot';
 
 export interface PluginConfig {
   [key: string]: any;
