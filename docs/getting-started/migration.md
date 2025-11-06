@@ -635,10 +635,10 @@ bot.command('typed', async (ctx) => {
 
 ## Getting Help
 
-- 📖 [Full Documentation](../README.md)
+- 📖 [Full Documentation](../index.md)
 - 🐛 [Report Issues](https://github.com/axrxvm/betterdiscordjs/issues)
 - 💬 [Discussions](https://github.com/axrxvm/betterdiscordjs/discussions)
-- 📋 [Examples](../examples/)
+- 📋 [Examples](../examples/commands.md)
 
 ---
 

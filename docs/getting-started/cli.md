@@ -379,7 +379,7 @@ After creating your project:
 1. ✅ Read the generated README.md
 2. ✅ Configure your .env file
 3. ✅ Start the bot and test basic commands
-4. ✅ Explore the [full documentation](../README.md)
+4. ✅ Explore the [full documentation](../index.md)
 5. ✅ Check out [example commands](../examples/commands.md)
 6. ✅ Learn about [plugins](../plugins/overview.md)
 7. ✅ Join the community and share your bot!
@@ -434,7 +434,7 @@ Want to improve the CLI? Contributions are welcome!
 
 ## Support
 
-- 📖 [Documentation](../README.md)
+- 📖 [Documentation](../index.md)
 - 💬 [Discussions](https://github.com/axrxvm/betterdiscordjs/discussions)
 - 🐛 [Report Issues](https://github.com/axrxvm/betterdiscordjs/issues)
 

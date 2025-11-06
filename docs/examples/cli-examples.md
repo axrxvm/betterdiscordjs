@@ -488,4 +488,4 @@ npx @axrxvm/betterdiscordjs create <name> [--template <type>] [--yes] [--no-inst
 
 ---
 
-**More examples?** Check the [full CLI documentation](./cli.md)
+**More examples?** Check the [full CLI documentation](../getting-started/cli.md)
