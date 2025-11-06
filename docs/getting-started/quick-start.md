@@ -2,9 +2,28 @@
 
 Get up and running with @axrxvm/betterdiscordjs in just a few minutes! This guide will help you create your first Discord bot using the framework.
 
-## 🚀 5-Minute Bot
+## 🚀 Method 1: Using the CLI (Recommended)
 
-Let's create a simple but functional Discord bot:
+The fastest way to get started is using our CLI tool:
+
+```bash
+npx @axrxvm/betterdiscordjs create my-bot
+cd my-bot
+# Configure .env with your bot token
+npm start
+```
+
+This will scaffold a complete project with:
+- ✅ Organized file structure
+- ✅ Example commands and events
+- ✅ Environment configuration
+- ✅ README with setup instructions
+
+For more CLI options, see the [CLI documentation](./cli.md).
+
+## 🛠️ Method 2: Manual Setup (5-Minute Bot)
+
+If you prefer to set things up manually, follow these steps:
 
 ### Step 1: Basic Setup
 

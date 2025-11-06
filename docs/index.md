@@ -7,8 +7,10 @@ Welcome to the comprehensive documentation for **@axrxvm/betterdiscordjs** - a m
 ### Getting Started
 - [Installation & Setup](./getting-started/installation.md)
 - [Quick Start Guide](./getting-started/quick-start.md)
+- [CLI Tool](./getting-started/cli.md)
 - [Configuration](./getting-started/configuration.md)
 - [Your First Bot](./getting-started/first-bot.md)
+- [Migration from Discord.js](./getting-started/migration.md)
 
 ### Core Concepts
 - [Bot Class](./core/bot-class.md)

@@ -9,6 +9,7 @@ A modern, modular and dev-friendly discord.js
 
 ## ✨ Features
 
+- 🚀 **CLI Tool** - Scaffold new projects with `npx @axrxvm/betterdiscordjs create`
 - 🎯 **Unified Commands** - Support for both slash and prefix commands
 - 🔧 **Enhanced Context** - Simplified Discord API interactions with `ctx` object
 - 📦 **Plugin System** - Modular architecture with built-in plugins
@@ -19,6 +20,17 @@ A modern, modular and dev-friendly discord.js
 - ⏰ **Task Scheduling** - Cron jobs and interval-based tasks
 
 ## 🚀 Quick Start
+
+### Using the CLI (Recommended)
+
+```bash
+npx @axrxvm/betterdiscordjs create my-bot
+cd my-bot
+# Configure .env with your bot token
+npm start
+```
+
+### Manual Setup
 
 ```bash
 npm install @axrxvm/betterdiscordjs
@@ -50,7 +62,9 @@ bot.start();
 
 - 📚 [Full Documentation](./docs/README.md)
 - 🚀 [Quick Start Guide](./docs/getting-started/quick-start.md)
-- 🔌 [Plugin Development](./docs/plugins/creating-plugins.md)
+- 🛠️ [CLI Tool](./docs/getting-started/cli.md)
+- 🔄 [Migration from Discord.js](./docs/getting-started/migration.md)
+- � [Plugin Development](./docs/plugins/creating-plugins.md)
 - 📋 [API Reference](./docs/api/bot.md)
 - 💡 [Examples](./docs/examples/)
 

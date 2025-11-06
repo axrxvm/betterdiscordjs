@@ -1,6 +1,6 @@
 {
   "name": "@axrxvm/betterdiscordjs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A modern, modular and dev-friendly discord.js",
   "keywords": [
     "betterdiscordjs",
@@ -22,10 +22,16 @@
   "author": "Aarav Mehta",
   "type": "commonjs",
   "main": "index.js",
+  "bin": {
+    "betterdjs": "./cli/index.js"
+  },
   "directories": {
     "doc": "docs"
   },
-  "scripts": {},
+  "scripts": {
+    "cli": "node cli/index.js",
+    "test:cli": "node cli/index.js create test-bot --yes --no-install"
+  },
   "dependencies": {
     "chalk": "^5.6.2",
     "discord.js": "14.22.1",
