@@ -11,13 +11,24 @@ A modern, modular and dev-friendly discord.js
 
 - 🚀 **CLI Tool** - Scaffold new projects with `npx @axrxvm/betterdiscordjs create`
 - 🎯 **Unified Commands** - Support for both slash and prefix commands
-- 🔧 **Enhanced Context** - Simplified Discord API interactions with `ctx` object
+- 🔧 **Enhanced Context** - 100+ methods covering the entire Discord.js API
 - 📦 **Plugin System** - Modular architecture with built-in plugins
 - ⚡ **Hot Reloading** - Development-friendly command and event reloading
 - 🛡️ **Built-in Security** - Rate limiting, permissions, and error handling
 - 📊 **Statistics & Logging** - Command tracking with beautiful colored logs
 - 🎨 **Rich Embeds** - Intuitive embed builder with fluent API
 - ⏰ **Task Scheduling** - Cron jobs and interval-based tasks
+- 📘 **TypeScript Support** - Full type definitions and ESM/CommonJS dual package
+- 🎯 **Modern ESM** - Native ES modules support alongside CommonJS
+- 🧩 **Modular Managers** - Separate CommandManager, EventManager, InteractionManager
+- 🔘 **Component Builders** - Fluent API for buttons, select menus, and modals
+- 🎭 **Interaction Handlers** - Built-in support for all Discord interaction types
+- 🔄 **Advanced Collectors** - Message, reaction, and component collectors
+- 📑 **Pagination** - Easy-to-use paginator for embeds
+- 🎪 **Modals & Dialogs** - Multi-step forms and user input
+- 🧵 **Thread Support** - Full thread management capabilities
+- 🪝 **Webhooks** - Create and manage webhooks easily
+- 🛠️ **Moderation Tools** - Kick, ban, timeout, bulk delete, and more
 
 ## 🚀 Quick Start
 
@@ -58,13 +69,38 @@ bot.on('ready', (ctx) => {
 bot.start();
 ```
 
+### TypeScript Setup
+
+```typescript
+import { Bot, BotConfig } from '@axrxvm/betterdiscordjs';
+
+const config: BotConfig = {
+  token: process.env.DISCORD_TOKEN!,
+  prefix: '!',
+  commandsPath: './commands',
+  eventsPath: './events'
+};
+
+const bot = new Bot(config);
+
+bot.command('ping', async (ctx) => {
+  await ctx.reply('🏓 Pong!');
+});
+
+await bot.login();
+```
+
+See [TYPESCRIPT.md](./TYPESCRIPT.md) for complete TypeScript documentation.
+
 ## 📖 Documentation
 
 - 📚 [Full Documentation](./docs/README.md)
-- 🚀 [Quick Start Guide](./docs/getting-started/quick-start.md)
+- 📘 [TypeScript Guide](./TYPESCRIPT.md)
+- ⚡ [Enhanced Features & API](./docs/ENHANCED-FEATURES.md)
+- � [Quick Start Guide](./docs/getting-started/quick-start.md)
 - 🛠️ [CLI Tool](./docs/getting-started/cli.md)
 - 🔄 [Migration from Discord.js](./docs/getting-started/migration.md)
-- � [Plugin Development](./docs/plugins/creating-plugins.md)
+- 🔌 [Plugin Development](./docs/plugins/creating-plugins.md)
 - 📋 [API Reference](./docs/api/bot.md)
 - 💡 [Examples](./docs/examples/)
 

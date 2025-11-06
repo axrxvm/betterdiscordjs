@@ -1,0 +1,17 @@
+{
+  "name": "{{PROJECT_NAME}}",
+  "version": "1.0.0",
+  "description": "{{DESCRIPTION}}",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": ["discord", "bot", "betterdiscordjs"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@axrxvm/betterdiscordjs": "^1.0.2",
+    "dotenv": "^17.2.2"
+  }
+}

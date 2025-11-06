@@ -53,11 +53,13 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Enhanced Features: ENHANCED-FEATURES.md
 
   - Getting Started:
       - Installation & Setup: getting-started/installation.md
       - Quick Start Guide: getting-started/quick-start.md
       - CLI Tool: getting-started/cli.md
+      - CLI vs Manual Setup: getting-started/cli-vs-manual.md
       - Configuration: getting-started/configuration.md
       - Your First Bot: getting-started/first-bot.md
       - Migration from Discord.js: getting-started/migration.md
@@ -93,6 +95,7 @@ nav:
   - Examples:
       - Basic Bot Examples: examples/basic-bots.md
       - Command Examples: examples/commands.md
+      - CLI Examples: examples/cli-examples.md
       - Plugin Examples: examples/plugins.md
       - Advanced Use Cases: examples/advanced.md
 

@@ -1,6 +1,6 @@
 {
   "name": "@axrxvm/betterdiscordjs",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A modern, modular and dev-friendly discord.js",
   "keywords": [
     "betterdiscordjs",
@@ -22,15 +22,49 @@
   "author": "Aarav Mehta",
   "type": "commonjs",
   "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "require": "./index.js",
+      "import": "./esm/index.mjs"
+    },
+    "./Bot": {
+      "types": "./Bot.d.ts",
+      "require": "./Bot.js",
+      "import": "./esm/Bot.mjs"
+    },
+    "./plugins": {
+      "types": "./plugins/BasePlugin.d.ts",
+      "require": "./plugins/BasePlugin.js",
+      "import": "./esm/plugins/BasePlugin.mjs"
+    },
+    "./plugins/*": {
+      "types": "./plugins/*/index.d.ts",
+      "require": "./plugins/*/index.js",
+      "import": "./esm/plugins/*/index.mjs"
+    },
+    "./utils/*": {
+      "types": "./utils/*.d.ts",
+      "require": "./utils/*.js",
+      "import": "./esm/utils/*.mjs"
+    },
+    "./package.json": "./package.json"
+  },
   "bin": {
-    "betterdjs": "./cli/index.js"
+    "betterdjs": "cli/index.js"
   },
   "directories": {
     "doc": "docs"
   },
   "scripts": {
+    "build": "npm run build:types && npm run build:esm",
+    "build:types": "tsc",
+    "build:esm": "node scripts/build-esm.js",
+    "typecheck": "tsc --noEmit",
     "cli": "node cli/index.js",
-    "test:cli": "node cli/index.js create test-bot --yes --no-install"
+    "test:cli": "node cli/index.js create test-bot --yes --no-install",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "chalk": "^5.6.2",
@@ -39,8 +73,11 @@
     "lowdb": "7.0.1",
     "node-cron": "^4.2.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/node-cron": "^3.0.11",
+    "typescript": "^5.3.3",
+    "tsup": "^8.0.1"
+  },
   "git": "https://github.com/axrxvm/betterdiscordjs.git"
 }
-
-

@@ -1,4 +1,12 @@
-const { EmbedBuilder } = require('discord.js');
+const { 
+  EmbedBuilder, 
+  AttachmentBuilder, 
+  ModalBuilder, 
+  TextInputBuilder,
+  TextInputStyle,
+  PermissionFlagsBits 
+} = require('discord.js');
+const { ComponentBuilder, BetterButton, BetterSelectMenu, BetterRow } = require('./components');
 
 /**
  * A builder for creating rich embeds with a fluent API.
@@ -660,8 +668,534 @@ class Ctx {
     if (!this.guild) throw new Error('No guild context');
     return await this.guild.members.fetch(id);
   }
+
+  /**
+   * Sends a message with attachments
+   * @param {Array<string|Buffer|AttachmentBuilder>} attachments - Files to attach
+   * @param {string|object} content - Optional message content
+   * @returns {Promise<Message>} The sent message
+   */
+  async sendFiles(attachments, content = null) {
+    const files = attachments.map(att => {
+      if (typeof att === 'string' || Buffer.isBuffer(att)) {
+        return new AttachmentBuilder(att);
+      }
+      return att;
+    });
+    
+    if (content) {
+      return this.reply({ content, files });
+    }
+    return this.reply({ files });
+  }
+
+  /**
+   * Creates a thread in the channel
+   * @param {string} name - Thread name
+   * @param {object} options - Thread options
+   * @returns {Promise<ThreadChannel>} The created thread
+   */
+  async createThread(name, options = {}) {
+    if (!this.channel?.threads) throw new Error('Channel does not support threads');
+    return await this.channel.threads.create({
+      name,
+      autoArchiveDuration: options.autoArchiveDuration || 60,
+      reason: options.reason,
+      ...options
+    });
+  }
+
+  /**
+   * Pins the message
+   * @returns {Promise<void>}
+   */
+  async pin() {
+    if (!this.raw.pin) throw new Error('Cannot pin this message');
+    return await this.raw.pin();
+  }
+
+  /**
+   * Unpins the message
+   * @returns {Promise<void>}
+   */
+  async unpin() {
+    if (!this.raw.unpin) throw new Error('Cannot unpin this message');
+    return await this.raw.unpin();
+  }
+
+  /**
+   * Starts typing indicator
+   * @returns {Promise<void>}
+   */
+  async typing() {
+    return await this.channel.sendTyping();
+  }
+
+  /**
+   * Gets the database instance
+   * @returns {Database} The database instance
+   */
+  get db() {
+    return this.bot.db;
+  }
+
+  /**
+   * Component builder shorthand
+   * @returns {ComponentBuilder}
+   */
+  get components() {
+    return ComponentBuilder;
+  }
+
+  /**
+   * Creates a new button using fluent API
+   * @returns {BetterButton}
+   */
+  newButton() {
+    return new BetterButton();
+  }
+
+  /**
+   * Creates a new select menu using fluent API
+   * @param {string} type - Menu type
+   * @returns {BetterSelectMenu}
+   */
+  newMenu(type = 'string') {
+    return new BetterSelectMenu(type);
+  }
+
+  /**
+   * Creates a new action row using fluent API
+   * @returns {BetterRow}
+   */
+  newRow() {
+    return new BetterRow();
+  }
+
+  /**
+   * Send ephemeral reply (slash commands only)
+   * @param {string|object} content - Message content
+   * @returns {Promise<Message>}
+   */
+  async ephemeral(content) {
+    if (!this.isInteraction) {
+      throw new Error('Ephemeral messages only work with interactions');
+    }
+    if (typeof content === 'string') {
+      return this.reply({ content, ephemeral: true });
+    }
+    return this.reply({ ...content, ephemeral: true });
+  }
+
+  /**
+   * Update the original interaction reply
+   * @param {string|object} content - New content
+   * @returns {Promise<Message>}
+   */
+  async update(content) {
+    if (!this.isInteraction) throw new Error('Update only works with interactions');
+    if (typeof content === 'string') {
+      return this.raw.editReply({ content });
+    }
+    return this.raw.editReply(content);
+  }
+
+  /**
+   * Fetch the original interaction reply
+   * @returns {Promise<Message>}
+   */
+  async fetchReply() {
+    if (!this.isInteraction) throw new Error('fetchReply only works with interactions');
+    return await this.raw.fetchReply();
+  }
+
+  /**
+   * Check if user has a specific role
+   * @param {string|Role} role - Role ID or Role object
+   * @returns {boolean}
+   */
+  hasRole(role) {
+    if (!this.member) return false;
+    const roleId = typeof role === 'string' ? role : role.id;
+    return this.member.roles.cache.has(roleId);
+  }
+
+  /**
+   * Add role to user
+   * @param {string|Role} role - Role ID or Role object
+   * @param {string} reason - Reason for audit log
+   * @returns {Promise<GuildMember>}
+   */
+  async addRole(role, reason) {
+    if (!this.member) throw new Error('No member in context');
+    return await this.member.roles.add(role, reason);
+  }
+
+  /**
+   * Remove role from user
+   * @param {string|Role} role - Role ID or Role object
+   * @param {string} reason - Reason for audit log
+   * @returns {Promise<GuildMember>}
+   */
+  async removeRole(role, reason) {
+    if (!this.member) throw new Error('No member in context');
+    return await this.member.roles.remove(role, reason);
+  }
+
+  /**
+   * Timeout a member
+   * @param {number} duration - Duration in milliseconds
+   * @param {string} reason - Reason for timeout
+   * @returns {Promise<GuildMember>}
+   */
+  async timeout(duration, reason) {
+    if (!this.member) throw new Error('No member in context');
+    return await this.member.timeout(duration, reason);
+  }
+
+  /**
+   * Kick a member
+   * @param {GuildMember|string} member - Member to kick (or user ID)
+   * @param {string} reason - Reason for kick
+   * @returns {Promise<GuildMember>}
+   */
+  async kick(member, reason) {
+    if (!this.guild) throw new Error('No guild context');
+    const memberObj = typeof member === 'string' ? await this.guild.members.fetch(member) : member;
+    return await memberObj.kick(reason);
+  }
+
+  /**
+   * Ban a member
+   * @param {GuildMember|string} member - Member to ban (or user ID)
+   * @param {object} options - Ban options
+   * @returns {Promise<GuildMember>}
+   */
+  async ban(member, options = {}) {
+    if (!this.guild) throw new Error('No guild context');
+    const userId = typeof member === 'string' ? member : member.id;
+    return await this.guild.members.ban(userId, options);
+  }
+
+  /**
+   * Unban a user
+   * @param {string} userId - User ID to unban
+   * @param {string} reason - Reason for unban
+   * @returns {Promise<User>}
+   */
+  async unban(userId, reason) {
+    if (!this.guild) throw new Error('No guild context');
+    return await this.guild.members.unban(userId, reason);
+  }
+
+  /**
+   * Create a webhook in the current channel
+   * @param {string} name - Webhook name
+   * @param {object} options - Webhook options
+   * @returns {Promise<Webhook>}
+   */
+  async createWebhook(name, options = {}) {
+    if (!this.channel?.createWebhook) throw new Error('Channel does not support webhooks');
+    return await this.channel.createWebhook({ name, ...options });
+  }
+
+  /**
+   * Send message via webhook
+   * @param {Webhook} webhook - The webhook to send through
+   * @param {string|object} content - Message content
+   * @returns {Promise<Message>}
+   */
+  async webhookSend(webhook, content) {
+    return await webhook.send(content);
+  }
+
+  /**
+   * Bulk delete messages
+   * @param {number} amount - Number of messages to delete (max 100)
+   * @param {boolean} filterBots - Whether to filter bot messages
+   * @returns {Promise<Collection>}
+   */
+  async bulkDelete(amount, filterBots = false) {
+    if (!this.channel?.bulkDelete) throw new Error('Channel does not support bulk delete');
+    if (amount > 100) amount = 100;
+    
+    if (filterBots) {
+      const messages = await this.channel.messages.fetch({ limit: amount });
+      const filtered = messages.filter(m => m.author.bot);
+      return await this.channel.bulkDelete(filtered);
+    }
+    
+    return await this.channel.bulkDelete(amount, true);
+  }
+
+  /**
+   * Get message by ID from current channel
+   * @param {string} messageId - Message ID
+   * @returns {Promise<Message>}
+   */
+  async getMessage(messageId) {
+    return await this.channel.messages.fetch(messageId);
+  }
+
+  /**
+   * Edit a message by ID
+   * @param {string} messageId - Message ID
+   * @param {string|object} content - New content
+   * @returns {Promise<Message>}
+   */
+  async editMessage(messageId, content) {
+    const message = await this.getMessage(messageId);
+    return await message.edit(content);
+  }
+
+  /**
+   * Delete a message by ID
+   * @param {string} messageId - Message ID
+   * @returns {Promise<Message>}
+   */
+  async deleteMessage(messageId) {
+    const message = await this.getMessage(messageId);
+    return await message.delete();
+  }
+
+  /**
+   * Create an invite for the current channel
+   * @param {object} options - Invite options
+   * @returns {Promise<Invite>}
+   */
+  async createInvite(options = {}) {
+    if (!this.channel?.createInvite) throw new Error('Channel does not support invites');
+    return await this.channel.createInvite(options);
+  }
+
+  /**
+   * Get all invites for the guild
+   * @returns {Promise<Collection>}
+   */
+  async getInvites() {
+    if (!this.guild) throw new Error('No guild context');
+    return await this.guild.invites.fetch();
+  }
+
+  /**
+   * Set channel permissions for a role or member
+   * @param {Role|GuildMember} target - Target role or member
+   * @param {object} permissions - Permission overwrites
+   * @param {string} reason - Reason for audit log
+   * @returns {Promise<void>}
+   */
+  async setPermissions(target, permissions, reason) {
+    if (!this.channel?.permissionOverwrites) throw new Error('Channel does not support permission overwrites');
+    return await this.channel.permissionOverwrites.create(target, permissions, { reason });
+  }
+
+  /**
+   * Get all members with a specific role
+   * @param {string|Role} role - Role ID or Role object
+   * @returns {Collection<string, GuildMember>}
+   */
+  getMembersWithRole(role) {
+    if (!this.guild) throw new Error('No guild context');
+    const roleId = typeof role === 'string' ? role : role.id;
+    return this.guild.members.cache.filter(member => member.roles.cache.has(roleId));
+  }
+
+  /**
+   * Create a new role
+   * @param {object} options - Role options
+   * @returns {Promise<Role>}
+   */
+  async createRole(options = {}) {
+    if (!this.guild) throw new Error('No guild context');
+    return await this.guild.roles.create(options);
+  }
+
+  /**
+   * Delete a role
+   * @param {string|Role} role - Role ID or Role object
+   * @param {string} reason - Reason for deletion
+   * @returns {Promise<Role>}
+   */
+  async deleteRole(role, reason) {
+    if (!this.guild) throw new Error('No guild context');
+    const roleObj = typeof role === 'string' ? await this.guild.roles.fetch(role) : role;
+    return await roleObj.delete(reason);
+  }
+
+  /**
+   * Modify channel settings
+   * @param {object} options - Channel options
+   * @param {string} reason - Reason for modification
+   * @returns {Promise<Channel>}
+   */
+  async modifyChannel(options, reason) {
+    return await this.channel.edit(options, reason);
+  }
+
+  /**
+   * Clone the current channel
+   * @param {object} options - Clone options
+   * @returns {Promise<Channel>}
+   */
+  async cloneChannel(options = {}) {
+    if (!this.channel?.clone) throw new Error('Channel cannot be cloned');
+    return await this.channel.clone(options);
+  }
+
+  /**
+   * Delete the current channel
+   * @param {string} reason - Reason for deletion
+   * @returns {Promise<Channel>}
+   */
+  async deleteChannel(reason) {
+    return await this.channel.delete(reason);
+  }
+
+  /**
+   * Get audit logs
+   * @param {object} options - Audit log options
+   * @returns {Promise<GuildAuditLogs>}
+   */
+  async getAuditLogs(options = {}) {
+    if (!this.guild) throw new Error('No guild context');
+    return await this.guild.fetchAuditLogs(options);
+  }
+
+  /**
+   * Get guild bans
+   * @returns {Promise<Collection>}
+   */
+  async getBans() {
+    if (!this.guild) throw new Error('No guild context');
+    return await this.guild.bans.fetch();
+  }
+
+  /**
+   * Search for members
+   * @param {string} query - Search query
+   * @param {number} limit - Result limit
+   * @returns {Promise<Collection>}
+   */
+  async searchMembers(query, limit = 10) {
+    if (!this.guild) throw new Error('No guild context');
+    return await this.guild.members.search({ query, limit });
+  }
+
+  /**
+   * Get guild emojis
+   * @returns {Collection}
+   */
+  getEmojis() {
+    if (!this.guild) throw new Error('No guild context');
+    return this.guild.emojis.cache;
+  }
+
+  /**
+   * Create custom emoji
+   * @param {string|Buffer} attachment - Emoji image
+   * @param {string} name - Emoji name
+   * @param {object} options - Additional options
+   * @returns {Promise<Emoji>}
+   */
+  async createEmoji(attachment, name, options = {}) {
+    if (!this.guild) throw new Error('No guild context');
+    return await this.guild.emojis.create({ attachment, name, ...options });
+  }
+
+  /**
+   * Delete custom emoji
+   * @param {string|Emoji} emoji - Emoji ID or Emoji object
+   * @param {string} reason - Reason for deletion
+   * @returns {Promise<void>}
+   */
+  async deleteEmoji(emoji, reason) {
+    if (!this.guild) throw new Error('No guild context');
+    const emojiObj = typeof emoji === 'string' ? await this.guild.emojis.fetch(emoji) : emoji;
+    return await emojiObj.delete(reason);
+  }
+
+  /**
+   * Get guild stickers
+   * @returns {Collection}
+   */
+  getStickers() {
+    if (!this.guild) throw new Error('No guild context');
+    return this.guild.stickers.cache;
+  }
+
+  /**
+   * Crosspost message (announcement channels)
+   * @returns {Promise<Message>}
+   */
+  async crosspost() {
+    if (!this.raw.crosspost) throw new Error('Message cannot be crossposted');
+    return await this.raw.crosspost();
+  }
+
+  /**
+   * Add reaction collector
+   * @param {object} options - Collector options
+   * @returns {ReactionCollector}
+   */
+  createReactionCollector(options = {}) {
+    if (!this.raw.createReactionCollector) throw new Error('Cannot create reaction collector');
+    return this.raw.createReactionCollector(options);
+  }
+
+  /**
+   * Add message collector
+   * @param {object} options - Collector options
+   * @returns {MessageCollector}
+   */
+  createMessageCollector(options = {}) {
+    return this.channel.createMessageCollector(options);
+  }
+
+  /**
+   * Get message reference (replied message)
+   * @returns {Promise<Message|null>}
+   */
+  async getReference() {
+    if (!this.raw.reference) return null;
+    return await this.channel.messages.fetch(this.raw.reference.messageId);
+  }
+
+  /**
+   * Check if message mentions the bot
+   * @returns {boolean}
+   */
+  mentionsBot() {
+    if (!this.raw.mentions) return false;
+    return this.raw.mentions.has(this.client.user.id);
+  }
+
+  /**
+   * Get all mentioned users
+   * @returns {Collection<string, User>}
+   */
+  getMentions() {
+    if (!this.raw.mentions) return new (require('discord.js').Collection)();
+    return this.raw.mentions.users;
+  }
+
+  /**
+   * Get all mentioned roles
+   * @returns {Collection<string, Role>}
+   */
+  getMentionedRoles() {
+    if (!this.raw.mentions) return new (require('discord.js').Collection)();
+    return this.raw.mentions.roles;
+  }
+
+  /**
+   * Get all mentioned channels
+   * @returns {Collection<string, Channel>}
+   */
+  getMentionedChannels() {
+    if (!this.raw.mentions) return new (require('discord.js').Collection)();
+    return this.raw.mentions.channels;
+  }
 }
 
 module.exports = Ctx;
-
 

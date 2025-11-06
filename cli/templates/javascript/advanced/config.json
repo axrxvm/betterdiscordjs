@@ -1,0 +1,13 @@
+{
+  "prefix": "{{PREFIX}}",
+  "plugins": {
+    "welcome": false,
+    "moderation": false,
+    "automod": false
+  },
+  "features": {
+    "commandLogging": true,
+    "errorReporting": true,
+    "autoDeleteInvites": false
+  }
+}
